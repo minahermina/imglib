@@ -4,8 +4,14 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include "image.h"
+#include <fcntl.h>
+#include <string.h>
+#include <errno.h>
 
+#include "image.h"
+#define PPM_MAGIC1 0x50360A
+#define PPM_MAGIC2 0x50330A
+#define PNG_MAGIC  0x89504e47
 
 /* Return -1 in case of out of boundries*/
 int8_t 
@@ -28,7 +34,7 @@ int8_t
 setpixel(ImagePtr img, uint16_t  x, uint16_t  y, uint16_t *pixel_values)
 {
     if (x >= img->height || y >= img->width) {
-        return 0;
+        return -1;
     }
 
     size_t index = (x * img->width + y) * img->channels;
@@ -59,19 +65,16 @@ print_img(ImagePtr img)
         printf("\n");
     }
 }
-
+/* Returns NULL in case of error*/
 ImagePtr 
 create_img(uint16_t width, uint16_t height, uint8_t channels)
 {
-    printf(": %d\n", width);
-    printf(": %d\n", height);
     ImagePtr img;
     img = (ImagePtr) calloc(1, sizeof(image));
     if(img == NULL) {
         fprintf(stderr, "Buy more RAM please");
         return NULL;
     }
-
 
     img->data= (uint16_t*) calloc(width * height * channels, sizeof(uint16_t));
     if(img->data == NULL) {
@@ -87,10 +90,70 @@ create_img(uint16_t width, uint16_t height, uint8_t channels)
     return img;
 }
 
-ImagePtr
-loadimg(const char* file, ImagePtr img)
+int8_t 
+free_img(ImagePtr img)
 {
+    free(img->data);
+    free(img);
+}
 
+/* TODO : Handle other image formats: PNG, JPG */
+int64_t 
+imgtype(const char *file)
+{
+    #define BUFSIZE 3
+    uint8_t buf[BUFSIZE];
+    int fd = open(file, O_RDONLY);
+    if (fd < 0) {
+        fprintf(stderr, "Error opening file %s \n%s", file , strerror(errno));
+        return -1;
+    }
+
+    /* TODO : find approach to read the magic number */
+    ssize_t bytesread = read(fd, buf, BUFSIZE);
+    if (bytesread < 0){
+        fprintf(stderr, "Error reading from file%s \n%s", file , strerror(errno));
+        return -1;
+    }
+
+    close(fd);
+    uint64_t magicnum = (buf[0] << 16) | (buf[1] << 8) | buf[2];
+    return magicnum;
+
+}
+
+ImagePtr 
+loadimgPPM(const char* file)
+{
+    ImagePtr img;
+    int fd = open(file, O_RDONLY);
+    if (fd < 0) {
+        fprintf(stderr, "Error opening file %s \n%s", file , strerror(errno));
+        return NULL;
+    }
+
+    img = malloc(sizeof(image));
+    if(img == NULL){
+        fprintf(stderr, "Buy more RAM LOL\n%s", strerror(errno));
+        return NULL;
+    }
+    /* TODO : read the PPM image data and allocate memory for it in img */
+    return img;
+}
+
+ImagePtr
+loadimg(const char* file)
+{
+    switch(imgtype(file)){
+        case PPM_MAGIC1:
+        case PPM_MAGIC2:
+            loadimgPPM(file);
+        default:
+            break;
+    }
+    imgtype(file);
+
+    return NULL;
 
 }
 

@@ -15,13 +15,13 @@ typedef struct {
 
 typedef image *ImagePtr;
 
-int8_t getpixel(ImagePtr img , uint16_t  x, uint16_t  y, uint16_t *pixel_values);
+ImagePtr createimg(uint16_t width, uint16_t height ,uint8_t channels);
 ImagePtr loadimg(const char *file);
 int64_t imgtype(const char *file);
-ImagePtr create_img(uint16_t width, uint16_t height ,uint8_t channels);
-int8_t free_img(ImagePtr img);
-ImagePtr loadimgPPM(const char* file);
+ImagePtr loadppm(const char* file);
+int8_t freeimg(ImagePtr img);
+int8_t getpixel(ImagePtr img , uint16_t  x, uint16_t  y, uint16_t *pixel_values);
 int8_t setpixel(ImagePtr img, uint16_t  x, uint16_t  y, uint16_t *pixel_values);
-void print_img(ImagePtr img);
+void printimg(ImagePtr img);
 
 #endif

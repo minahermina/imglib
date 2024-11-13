@@ -10,7 +10,10 @@
 
 #include "image.h"
 
+#define MAX_LINE_LENGTH 200
+
 /* Returns NULL in case of error*/
+
 ImagePtr 
 createimg(uint16_t width, uint16_t height, uint8_t channels)
 {
@@ -60,6 +63,7 @@ imgtype(const char *file)
     return magicnum;
 }
 
+/* TODO : handle other PPM formats (PGM)*/
 ImagePtr 
 loadppm(const char* file)
 {
@@ -123,6 +127,7 @@ uint8_t saveppm(const char *file, ImagePtr img){
     return 0;
 
 }
+
 
 int8_t 
 free_img(ImagePtr img)

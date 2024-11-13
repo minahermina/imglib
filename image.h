@@ -2,9 +2,6 @@
 #define IMAGE_LIB
 #include <stdint.h>
 
-#define PPM_MAGIC1 0x50360A
-#define PPM_MAGIC2 0x50330A
-#define PNG_MAGIC  0x89504e47
 
 typedef struct {
     uint16_t *data;

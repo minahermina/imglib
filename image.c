@@ -9,9 +9,6 @@
 #include <errno.h>
 
 #include "image.h"
-#define PPM_MAGIC1 0x50360A
-#define PPM_MAGIC2 0x50330A
-#define PNG_MAGIC  0x89504e47
 
 /* Returns NULL in case of error*/
 ImagePtr 
@@ -152,9 +149,6 @@ ImagePtr
 loadimg(const char* file)
 {
     switch(imgtype(file)){
-        case PPM_MAGIC1:
-        case PPM_MAGIC2:
-            loadppm(file);
         default:
             break;
     }

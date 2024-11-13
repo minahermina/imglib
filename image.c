@@ -64,13 +64,42 @@ ImagePtr
 loadppm(const char* file)
 {
     ImagePtr img;
-    int fd = open(file, O_RDONLY);
-    if (fd < 0) {
-        fprintf(stderr, "Error opening file %s \n%s", file , strerror(errno));
+    FILE* imagefile;
+    uint16_t pixel_values[3], w, h;
+    uint32_t i;
+    uint8_t channels;
+    char line[MAX_LINE_LENGTH];
+    unsigned char buf[3];
+
+    imagefile = fopen(file, "rb" );
+    if (imagefile == NULL)
         return NULL;
+
+    fgets(line, sizeof(line), imagefile);
+    fgets(line, sizeof(line), imagefile);
+    sscanf(line, "%hu %hu", &w, &h);
+    fgets(line, sizeof(line), imagefile);
+    
+    channels = 3; /*PPM*/
+    img = createimg(w, h, channels);
+
+    i = 0;
+    /* TODO : read the PPM image*/   
+    while ((fread(buf, 1, 3, imagefile)) == 3 && i < w * h) {
+        for(uint8_t channel = 0; channel < channels; channel++){
+            pixel_values[channel] = buf[channel];
+        }
+        uint16_t x = i % w;
+        uint16_t y = i / w;
+        // printf("%hu %hu \n", x, y);
+
+        setpixel(img, x, y, pixel_values);
+        i++;
     }
 
-    img = malloc(sizeof(image));
+    fclose(imagefile);
+    return img;
+}
     if(img == NULL){
         fprintf(stderr, "Buy more RAM LOL\n%s", strerror(errno));
         return NULL;

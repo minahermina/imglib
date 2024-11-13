@@ -100,14 +100,28 @@ loadppm(const char* file)
     fclose(imagefile);
     return img;
 }
+uint8_t saveppm(const char *file, ImagePtr img){
+    uint8_t px[3] = {};
     if(img == NULL){
-        fprintf(stderr, "Buy more RAM LOL\n%s", strerror(errno));
-        return NULL;
+        fprintf(stderr, "img is NULL!");
+        return -1;
     }
-    /* TODO : read the PPM image data and allocate memory for it in img */
 
-    fprintf(stdout, "ok");
-    return img;
+    FILE * imgfile = fopen(file, "wb");
+    if(imgfile == NULL){
+        fprintf(stderr, "failed to open file %s", file);
+        return -1;
+    }
+    fprintf(imgfile, "P6\n%hu %hu\n255\n", img->width, img->height);
+    for (uint32_t i = 0; i < img->width * img->height; i+=3) {
+        for (uint8_t channel = 0; channel < img->channels; channel++) {
+            px[channel] =  img->data[i + channel];
+        }
+        printf("pixel: %hhu %hhu %hhu\n", px[0], px[1], px[2]);
+        fwrite(&px, 1, 3, imgfile);
+    }
+    return 0;
+
 }
 
 int8_t 

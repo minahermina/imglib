@@ -95,6 +95,8 @@ loadppm(const char* file)
         }
         uint16_t x = i % w;
         uint16_t y = i / w;
+        uint16_t x = i / w;
+        uint16_t y = i % w;
         // printf("%hu %hu \n", x, y);
 
         setpixel(img, x, y, pixel_values);

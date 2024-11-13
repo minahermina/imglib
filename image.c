@@ -191,11 +191,15 @@ printimg(ImagePtr img)
 ImagePtr
 loadimg(const char* file)
 {
+    ImagePtr img;
     switch(imgtype(file)){
+        case PPM_MAGIC_BIN:
+        case PPM_MAGIC_ASCII:
+            img = loadppm(file);
         default:
             break;
     }
 
-    return NULL;
+    // return NULL;
 }
 

@@ -121,10 +121,10 @@ uint8_t saveppm(const char *file, ImagePtr img){
     }
 
     fprintf(imgfile, "P6\n%hu %hu\n255\n", img->width, img->height);
-    for(size_t i = 0; i < img->height; i++) {
-        for(size_t j = 0; j < img->width; j++) { 
+    for(uint16_t i = 0; i < img->height; i++) {
+        for(uint16_t j = 0; j < img->width; j++) { 
             getpixel(img, i, j, px);
-            for(size_t k = 0; k < img->channels; k++) { 
+            for(uint8_t k = 0; k < img->channels; k++) { 
                 px_ch[k] = (unsigned char)px[k];
             }
             fwrite(px_ch, sizeof(unsigned char), 3, imgfile);
@@ -183,11 +183,11 @@ printimg(ImagePtr img)
         return; 
     }
 
-    size_t index ;
-    for(size_t i = 0; i < img->height; i++) {
-        for(size_t j = 0; j < img->width; j++) { 
+    uint16_t index ;
+    for(uint16_t i = 0; i < img->height; i++) {
+        for(uint16_t j = 0; j < img->width; j++) { 
             printf("{ ");
-            for(size_t k = 0; k < img->channels; k++) { 
+            for(uint8_t k = 0; k < img->channels; k++) { 
                 index = (i * img->width + j) * img->channels;
                 printf("%"PRIu16" ", img->data[index + k]);
             }

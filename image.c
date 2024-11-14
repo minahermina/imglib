@@ -203,15 +203,17 @@ printimg(ImagePtr img)
 ImagePtr
 loadimg(const char* file)
 {
-    ImagePtr img;
+    ImagePtr img = NULL;
     switch(imgtype(file)){
         case PPM_MAGIC_BIN:
         case PPM_MAGIC_ASCII:
             img = loadppm(file);
+            break;
         default:
+             fprintf(stderr, "This image format is not supported yet!!\n");
             break;
     }
 
-    // return NULL;
+    return img;
 }
 

@@ -137,7 +137,7 @@ uint8_t saveppm(const char *file, ImagePtr img){
 
 
 void 
-free_img(ImagePtr img)
+freeimg(ImagePtr img)
 {
     free(img->data);
     free(img);

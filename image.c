@@ -130,9 +130,7 @@ uint8_t saveppm(const char *file, ImagePtr img){
             fwrite(px_ch, sizeof(unsigned char), 3, imgfile);
         }
     }
-    return 0;
-
-
+    return 1;
 }
 
 
@@ -205,7 +203,7 @@ loadimg(const char* file)
 {
     ImagePtr img = NULL;
     switch(imgtype(file)){
-        case PPM_MAGIC_BIN:
+        case PPM_MAGIC_BIN: /* FALLTHROUGH */
         case PPM_MAGIC_ASCII:
             img = loadppm(file);
             break;

@@ -241,16 +241,18 @@ loadimg(const char* file)
 void 
 printimg(ImagePtr img)
 {
+    uint16_t index;
+    uint16_t i ,j;
+    uint8_t k;
     if (img == NULL) {
         fprintf(stderr, "img is NULL!");
         return; 
     }
 
-    uint16_t index ;
-    for(uint16_t i = 0; i < img->height; i++) {
-        for(uint16_t j = 0; j < img->width; j++) { 
+    for(i = 0; i < img->height; i++) {
+        for(j = 0; j < img->width; j++) { 
             printf("{ ");
-            for(uint8_t k = 0; k < img->channels; k++) { 
+            for(k = 0; k < img->channels; k++) { 
                 index = (i * img->width + j) * img->channels;
                 printf("%"PRIu16" ", img->data[index + k]);
             }
@@ -259,7 +261,4 @@ printimg(ImagePtr img)
         printf("\n");
     }
 }
-
-
-
 

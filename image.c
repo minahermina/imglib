@@ -49,27 +49,42 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
 
 
 /* TODO : Handle other image formats: PNG, JPG */
-int64_t 
+ImgType 
 imgtype(const char *file)
 {
-    #define BUFSIZE 3
-    uint8_t buf[BUFSIZE];
-    int fd = open(file, O_RDONLY);
+      int fd;
+    ssize_t bytesread;
+    unsigned char magic[8];  // Buffer for magic numbers
+    uint16_t magic_num;
+    
+    fd = open(file, O_RDONLY);
     if (fd < 0) {
-        fprintf(stderr, "Error opening file %s \n%s", file , strerror(errno));
-        return -1;
+        fprintf(stderr, "Error opening file %s\n%s", file, strerror(errno));
+        return IMG_UNKNOWN;
     }
 
-    /* TODO : find approach to read the magic number */
-    ssize_t bytesread = read(fd, buf, BUFSIZE);
-    if (bytesread < 0){
-        fprintf(stderr, "Error reading from file%s \n%s", file , strerror(errno));
-        return -1;
-    }
-
+    bytesread = read(fd, magic, sizeof(magic));
     close(fd);
-    uint64_t magicnum = (buf[0] << 16) | (buf[1] << 8) | buf[2];
-    return magicnum;
+    
+    if (bytesread < 2) {
+        return IMG_UNKNOWN;
+    }
+
+    magic_num = (magic[0] << 8) | magic[1];
+    
+    switch(magic_num) {
+        case 0x5036: return IMG_PPM_BIN;    // P6
+        case 0x5033: return IMG_PPM_ASCII;  // P3
+        case 0x5035: return IMG_PGM_BIN;    // P5
+        case 0x5032: return IMG_PGM_ASCII;  // P2
+        case 0x8950: return IMG_PNG;        // \x89P
+        case 0xFFD8: return IMG_JPG;        // JPEG SOI
+        case 0x424D: return IMG_BMP;        // BM
+        case 0x4749: return IMG_GIF;        // GI
+        case 0x4949: // II - Intel TIFF
+        case 0x4D4D: return IMG_TIFF;       // MM - Motorola TIFF
+        default: return IMG_UNKNOWN;
+    }
 }
 
 /* TODO : handle other PPM formats (PGM)*/

@@ -159,34 +159,41 @@ freeimg(ImagePtr img)
 }
 
 
-/* Return -1 in case of out of boundries*/
 int8_t 
-getpixel(ImagePtr img, uint16_t  x, uint16_t  y, uint16_t *pixel_values)
+getpixel(ImagePtr img, uint16_t x, uint16_t y, uint16_t *pixel)
 {
-    if (x >= img->height || y >= img->width) {
+    uint8_t *p, i;
+    if (x >= img->width || y >= img->height) {
         return -1;
     }
 
-    size_t index = (x * img->width + y) * img->channels;
-    for(uint8_t i = 0; i < img->channels; i++ ) {
-        pixel_values[i] = img->data[index + i];
+    p = IMG_PIXEL_PTR(img, x, y);
+    for(i = 0; i < img->channels; i++) {
+        pixel[i] = p[i];
     }
 
     return 1;
 }
 
-/* Return -1 in case of out of boundries*/
-int8_t 
-setpixel(ImagePtr img, uint16_t  x, uint16_t  y, uint16_t *pixel_values)
+int8_t
+setpixel(ImagePtr img, uint16_t x, uint16_t y, uint16_t *pixel)
 {
-    if (x >= img->height || y >= img->width) {
+    uint8_t *p;
+    uint8_t i;
+
+    // Bounds checking
+    if (x >= img->width || y >= img->height) {
         return -1;
     }
 
-    size_t index = (x * img->width + y) * img->channels;
-    for(uint8_t i = 0; i < img->channels; i++ ) {
-         img->data[index + i] = pixel_values[i];
+    // Get pointer to pixel using macro
+    p = IMG_PIXEL_PTR(img, x, y);
+
+    // Copy pixel data
+    for(i = 0; i < img->channels; i++) {
+        p[i] = (uint8_t)pixel[i];
     }
+
     return 1;
 }
 

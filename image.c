@@ -212,6 +212,32 @@ setpixel(ImagePtr img, uint16_t x, uint16_t y, uint16_t *pixel)
     return 1;
 }
 
+ImagePtr
+loadimg(const char* file)
+{
+    if(strlen(file) < 1 ) 
+        return NULL;
+
+    ImagePtr img = NULL;
+    int64_t type = imgtype(file);
+
+    switch(type) {
+        case IMG_PPM_BIN:
+        case IMG_PPM_ASCII:
+            img = loadppm(file);
+            if (img) img->type = type;
+            break;
+        case IMG_PGM_BIN:
+        case IMG_PGM_ASCII:
+            // TODO: implement PGM loading
+            fprintf(stderr, "PGM format not yet supported\n");
+            break;
+        default:
+            fprintf(stderr, "Unsupported or invalid image format\n");
+    }
+    
+    return img;
+}
 void 
 printimg(ImagePtr img)
 {
@@ -236,21 +262,4 @@ printimg(ImagePtr img)
 
 
 
-
-ImagePtr
-loadimg(const char* file)
-{
-    ImagePtr img = NULL;
-    switch(imgtype(file)){
-        case PPM_MAGIC_BIN: /* FALLTHROUGH */
-        case PPM_MAGIC_ASCII:
-            img = loadppm(file);
-            break;
-        default:
-             fprintf(stderr, "This image format is not supported yet!!\n");
-            break;
-    }
-
-    return img;
-}
 

@@ -93,21 +93,21 @@ loadppm(const char* file)
 {
     ImagePtr img;
     FILE* imagefile;
-    uint16_t pixel_values[3], w, h;
-    uint32_t i;
-    uint8_t channels;
+    uint8_t *pixel, *row, channels, ch;
+    uint16_t w, h;
+    uint32_t j, i;
     char line[MAX_LINE_LENGTH];
     unsigned char buf[3];
 
-    imagefile = fopen(file, "rb" );
+    imagefile = fopen(file, "rb");
     if (imagefile == NULL)
         return NULL;
 
+    /* Read header */
     fgets(line, sizeof(line), imagefile);
     fgets(line, sizeof(line), imagefile);
     sscanf(line, "%hu %hu", &w, &h);
     fgets(line, sizeof(line), imagefile);
-    
 
     channels = 3;
     img = createimg(w, h, channels);

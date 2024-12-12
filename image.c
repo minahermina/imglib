@@ -25,14 +25,14 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
     ImagePtr img;
     img = (ImagePtr) calloc(1, sizeof(image));
     if(img == NULL) {
-        fprintf(stderr, "Buy more RAM please");
+        fprintf(stderr, "Buy More RAM LOL!\n");
         return NULL;
     }
 
     img->stride = calc_stride(width, channels);
     img->data = (uint8_t*) malloc(height * img->stride);
     if(img->data == NULL) {
-        fprintf(stderr, "Buy more RAM please");
+        fprintf(stderr, "Buy more RAM LOL!\n");
         free(img);
         return NULL;
     }

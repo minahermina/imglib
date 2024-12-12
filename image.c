@@ -12,7 +12,12 @@
 
 #define MAX_LINE_LENGTH 200
 
-/* Returns NULL in case of error*/
+#define IMG_PIXEL_PTR(img, x, y) ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
+
+static inline uint32_t 
+calc_stride(uint16_t width, uint8_t channels) {
+    return (((uint32_t) width * (uint32_t)channels + 15) & ~(uint32_t)15);
+}
 
 ImagePtr 
 createimg(uint16_t width, uint16_t height, uint8_t channels)
@@ -24,16 +29,20 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
         return NULL;
     }
 
-    img->data= (uint16_t*) calloc(width * height * channels, sizeof(uint16_t));
+    img->stride = calc_stride(width, channels);
+    img->data = (uint8_t*) malloc(height * img->stride);
     if(img->data == NULL) {
         fprintf(stderr, "Buy more RAM please");
+        free(img);
         return NULL;
     }
 
-    img->width    = width;
-    img->height   = height;
-    img->channels = channels;
+    memset(img->data, 0, height * img->stride);
 
+    img->width = width;
+    img->height = height;
+    img->channels = channels;
+    img->type = -1;
 
     return img;
 }
@@ -84,54 +93,62 @@ loadppm(const char* file)
     sscanf(line, "%hu %hu", &w, &h);
     fgets(line, sizeof(line), imagefile);
     
-    channels = 3; /*PPM*/
+
+    channels = 3;
     img = createimg(w, h, channels);
-
-    i = 0;
-    /* TODO : read the PPM image*/   
-    while ((fread(buf, 1, 3, imagefile)) == 3 && i < w * h) {
-        for(uint8_t channel = 0; channel < channels; channel++){
-            pixel_values[channel] = buf[channel];
+    if (!img) {
+        fclose(imagefile);
+        return NULL;
+    }
+    /* Load image pixels */
+    for(i = 0; i < h; i++) {
+        row = &img->data[i * img->stride];
+        for(j = 0; j < w; j++) {
+            if (fread(buf, 1, 3, imagefile) != 3) {
+                freeimg(img);
+                fclose(imagefile);
+                return NULL;
+            }
+            pixel = &row[j * channels];
+            for(ch = 0; ch < channels; ch++) {
+                pixel[ch] = buf[ch];
+            }
         }
-        uint16_t x = i / w;
-        uint16_t y = i % w;
-        // printf("%hu %hu \n", x, y);
-
-        setpixel(img, x, y, pixel_values);
-        i++;
     }
 
     fclose(imagefile);
     return img;
 }
-uint8_t saveppm(const char *file, ImagePtr img){
-    uint16_t px[3] ;
-    unsigned char px_ch[3];
-    FILE *imgfile ;
 
-    if(img == NULL){
+uint8_t 
+saveppm(const char *file, ImagePtr img)
+{
+    FILE *fp;
+    uint32_t x, y;
+    uint8_t *row, *pixel;
+
+    if (img == NULL) {
         fprintf(stderr, "img is NULL!");
-        return -1;
+        return 0;
     }
 
-    imgfile = fopen(file, "wb");
-    if(imgfile == NULL){
-        fprintf(stderr, "failed to open file %s", file);
-        return -1;
-    }
+    fp = fopen(file, "wb");
+    if (!fp)
+        return 0;
 
-    fprintf(imgfile, "P6\n%hu %hu\n255\n", img->width, img->height);
-    for(uint16_t i = 0; i < img->height; i++) {
-        for(uint16_t j = 0; j < img->width; j++) { 
-            getpixel(img, i, j, px);
-            for(uint8_t k = 0; k < img->channels; k++) { 
-                px_ch[k] = (unsigned char)px[k];
+    // Write header
+    fprintf(fp, "P6\n%d %d\n255\n", img->width, img->height);
+
+    for(y = 0; y < img->height; y++) {
+        row = &img->data[y * img->stride];
+        for(x = 0; x < img->width; x++) {
+            pixel = &row[x * img->channels];
+            if (fwrite(pixel, 1, img->channels, fp) != img->channels) {
+                fclose(fp);
+                return 0;
             }
-            fwrite(px_ch, sizeof(unsigned char), 3, imgfile);
         }
     }
-    return 1;
-}
 
 
 void 

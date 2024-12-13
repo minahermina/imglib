@@ -73,16 +73,16 @@ imgtype(const char *file)
     magic_num = (magic[0] << 8) | magic[1];
     
     switch(magic_num) {
-        case 0x5036: return IMG_PPM_BIN;    // P6
-        case 0x5033: return IMG_PPM_ASCII;  // P3
-        case 0x5035: return IMG_PGM_BIN;    // P5
-        case 0x5032: return IMG_PGM_ASCII;  // P2
-        case 0x8950: return IMG_PNG;        // \x89P
-        case 0xFFD8: return IMG_JPG;        // JPEG SOI
-        case 0x424D: return IMG_BMP;        // BM
-        case 0x4749: return IMG_GIF;        // GI
-        case 0x4949: // II - Intel TIFF
-        case 0x4D4D: return IMG_TIFF;       // MM - Motorola TIFF
+        case 0x5036: return IMG_PPM_BIN;
+        case 0x5033: return IMG_PPM_ASCII;
+        case 0x5035: return IMG_PGM_BIN;
+        case 0x5032: return IMG_PGM_ASCII;
+        case 0x8950: return IMG_PNG;
+        case 0xFFD8: return IMG_JPG;
+        case 0x424D: return IMG_BMP;
+        case 0x4749: return IMG_GIF;
+        case 0x4949:
+        case 0x4D4D: return IMG_TIFF;
         default: return IMG_UNKNOWN;
     }
 }
@@ -196,15 +196,12 @@ setpixel(ImagePtr img, uint16_t x, uint8_t y, uint8_t *pixel)
     uint8_t *p;
     uint8_t i;
 
-    // Bounds checking
     if (x >= img->width || y >= img->height) {
         return -1;
     }
 
-    // Get pointer to pixel using macro
     p = IMG_PIXEL_PTR(img, x, y);
 
-    // Copy pixel data
     for(i = 0; i < img->channels; i++) {
         p[i] = pixel[i];
     }

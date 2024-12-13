@@ -135,7 +135,7 @@ loadppm(const char* file)
     return img;
 }
 
-uint8_t 
+uint8_t
 saveppm(const char *file, ImagePtr img)
 {
     FILE *fp;
@@ -144,12 +144,12 @@ saveppm(const char *file, ImagePtr img)
 
     if (img == NULL) {
         fprintf(stderr, "img is NULL!");
-        return 0;
+        return -1;
     }
 
     fp = fopen(file, "wb");
     if (!fp)
-        return 0;
+        return -1;
 
     // Write header
     fprintf(fp, "P6\n%d %d\n255\n", img->width, img->height);
@@ -164,7 +164,9 @@ saveppm(const char *file, ImagePtr img)
             }
         }
     }
-
+    fclose(fp);
+    return 1;
+}
 
 void 
 freeimg(ImagePtr img)

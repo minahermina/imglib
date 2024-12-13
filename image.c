@@ -193,7 +193,7 @@ getpixel(ImagePtr img, uint16_t x, uint16_t y, uint16_t *pixel)
 }
 
 int8_t
-setpixel(ImagePtr img, uint16_t x, uint8_t y, uint8_t *pixel)
+setpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
 

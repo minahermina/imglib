@@ -191,7 +191,7 @@ getpixel(ImagePtr img, uint16_t x, uint16_t y, uint16_t *pixel)
 }
 
 int8_t
-setpixel(ImagePtr img, uint16_t x, uint16_t y, uint16_t *pixel)
+setpixel(ImagePtr img, uint16_t x, uint8_t y, uint8_t *pixel)
 {
     uint8_t *p;
     uint8_t i;
@@ -206,7 +206,7 @@ setpixel(ImagePtr img, uint16_t x, uint16_t y, uint16_t *pixel)
 
     // Copy pixel data
     for(i = 0; i < img->channels; i++) {
-        p[i] = (uint8_t)pixel[i];
+        p[i] = pixel[i];
     }
 
     return 1;

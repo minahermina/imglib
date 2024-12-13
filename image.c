@@ -193,8 +193,7 @@ getpixel(ImagePtr img, uint16_t x, uint16_t y, uint16_t *pixel)
 int8_t
 setpixel(ImagePtr img, uint16_t x, uint8_t y, uint8_t *pixel)
 {
-    uint8_t *p;
-    uint8_t i;
+    uint8_t *p, i;
 
     if (x >= img->width || y >= img->height) {
         return -1;
@@ -238,8 +237,7 @@ loadimg(const char* file)
 void 
 printimg(ImagePtr img)
 {
-    uint16_t index;
-    uint16_t i ,j;
+    uint16_t index, i, j;
     uint8_t k;
     if (img == NULL) {
         fprintf(stderr, "img is NULL!");

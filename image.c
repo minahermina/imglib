@@ -280,12 +280,16 @@ loadimg(const char* file)
         case IMG_PPM_BIN:
         case IMG_PPM_ASCII:
             img = loadppm(file);
-            if (img) img->type = type;
+            if (img){
+                img->type = type;
+            }else{
+                fprintf(stderr, "Error loading image: %s\n", file);
+                return NULL;
+            }
             break;
         case IMG_PGM_BIN:
         case IMG_PGM_ASCII:
             // TODO: implement PGM loading
-            fprintf(stderr, "PGM format not yet supported\n");
             break;
         default:
             fprintf(stderr, "Unsupported or invalid image format\n");

@@ -234,7 +234,7 @@ freeimg(ImagePtr img)
 
 
 int8_t 
-getpixel(ImagePtr img, uint16_t x, uint16_t y, uint16_t *pixel)
+getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
     if (x >= img->width || y >= img->height) {

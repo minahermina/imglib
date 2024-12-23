@@ -11,6 +11,7 @@
 #include "image.h"
 
 #define MAX_LINE_LENGTH 200
+#define CHUNK_SIZE 8193
 
 #define IMG_PIXEL_PTR(img, x, y) ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
 

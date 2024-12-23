@@ -206,6 +206,25 @@ saveppm(ImagePtr img, const char *file)
     return 1;
 }
 
+
+uint8_t 
+saveimg( ImagePtr img, const char *file)
+{
+    if(img == NULL || file == NULL || strlen(file) < 1) 
+        return -1;
+
+    switch (img->type) {
+        case IMG_PPM_BIN:
+        case IMG_PPM_ASCII:
+            saveppm(img , file);
+            break;
+        default:
+            return -1;
+    }
+    return 1;
+}
+
+
 void 
 freeimg(ImagePtr img)
 {

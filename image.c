@@ -87,6 +87,35 @@ imgtype(const char *file)
     }
 }
 
+int8_t 
+addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
+{
+    uint8_t *p, i;
+    uint32_t x, y;
+
+    if (img == NULL || pixel == NULL || current_pos == NULL) {
+        fprintf(stderr, "Error: Invalid input (img, pixel, or position is NULL).\n");
+        return -1;
+    }
+
+    if (*current_pos >= (uint32_t)(img->width * img->height)) {
+        fprintf(stderr, "Error: Exceeded image capacity.\n");
+        return -1;
+    }
+
+    x = *current_pos % img->width;
+    y = *current_pos / img->width;
+    p = IMG_PIXEL_PTR(img, x, y);
+
+    for (i = 0; i < img->channels; i++) {
+        p[i] = pixel[i];
+    }
+
+    (*current_pos)++;
+
+    return 1;
+}
+
 /* TODO : handle other PPM formats (PGM)*/
 ImagePtr 
 loadppm(const char* file)

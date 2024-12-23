@@ -320,3 +320,36 @@ printimg(ImagePtr img)
     }
 }
 
+int8_t
+dispimg(ImagePtr img, const char* imgviewer)
+{
+    char template[] = "/tmp/img_XXXXXX";
+    char CMD[0xFFF];
+    int fd;
+
+
+    printf("Using viewer command: '%s'\n", imgviewer);
+
+    fd = mkstemp(template);
+    if(fd == -1) {
+        fprintf(stderr, "Error creating temporary file\n");
+        return -1;
+    }
+
+    FILE* file = fdopen(fd, "w+");
+    if(file == NULL) {
+        fprintf(stderr, "Error opening temporary image file\n");
+        close(fd);
+        unlink(template);
+        return -1;
+    }
+
+    saveimg(img, template);
+    sprintf(CMD, "%s %s", imgviewer, template);
+    printf("Executing command: '%s'\n", CMD);
+    system(CMD);
+
+    fclose(file);
+    unlink(template);
+
+    return 0;

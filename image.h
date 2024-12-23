@@ -25,16 +25,18 @@ typedef struct {
 } image;
 
 typedef image *ImagePtr;
+
 ImagePtr createimg(uint16_t width, uint16_t height, uint8_t channels);
 void freeimg(ImagePtr img);
 ImgType imgtype(const char *file);
 ImagePtr loadimg(const char* file);
-
+int8_t addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos);
 ImagePtr loadppm(const char* file);
-uint8_t saveppm(const char *file, ImagePtr img);
-
+uint8_t saveppm( ImagePtr img, const char *file);
+uint8_t saveimg( ImagePtr img, const char *file);
 int8_t getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
 int8_t setpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
 void printimg(ImagePtr img);
+int8_t dispimg(ImagePtr img, const char* custom_viewer);
 
 #endif

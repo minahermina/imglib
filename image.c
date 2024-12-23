@@ -300,20 +300,19 @@ loadimg(const char* file)
 void 
 printimg(ImagePtr img)
 {
-    uint16_t index, i, j;
-    uint8_t k;
+    uint16_t i, j, k;
+    uint8_t pixel[] = {0, 0, 0, 0};
     if (img == NULL) {
         fprintf(stderr, "img is NULL!");
-        return; 
+        return;
     }
 
     for(i = 0; i < img->height; i++) {
-        for(j = 0; j < img->width; j++) { 
+        for(j = 0; j < img->width; j++) {
             printf("{ ");
-            for(k = 0; k < img->channels; k++) { 
-                index = (i * img->width + j) * img->channels;
-                printf("%"PRIu16" ", img->data[index + k]);
-            }
+            getpixel(img, j, i, pixel);
+            for(k = 0; k < img->channels; k++) 
+                printf("%hu ",pixel[k]);
             printf("},");
         }
         printf("\n");
@@ -353,3 +352,4 @@ dispimg(ImagePtr img, const char* imgviewer)
     unlink(template);
 
     return 0;
+}

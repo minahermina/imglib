@@ -174,7 +174,7 @@ loadppm(const char* file)
 }
 
 uint8_t
-saveppm(const char *file, ImagePtr img)
+saveppm(ImagePtr img, const char *file)
 {
     FILE *fp;
     uint32_t x, y;

@@ -121,46 +121,55 @@ ImagePtr
 loadppm(const char* file)
 {
     ImagePtr img;
-    FILE* imagefile;
-    uint8_t *pixel, *row, channels, ch;
+    ssize_t imgfile;
+    FILE* tmp_file;
+    uint8_t pixel[3], *row, channels, ch;
     uint16_t w, h;
-    uint32_t j, i;
-    char line[MAX_LINE_LENGTH];
-    unsigned char buf[3];
+    uint32_t j, i, curr_pos, bytesread;
+    char line[MAX_LINE_LENGTH], chunk[CHUNK_SIZE];
 
-    imagefile = fopen(file, "rb");
-    if (imagefile == NULL)
+    tmp_file = fopen(file, "rb");
+    if (tmp_file == NULL)
         return NULL;
 
     /* Read header */
-    fgets(line, sizeof(line), imagefile);
-    fgets(line, sizeof(line), imagefile);
+    fgets(line, sizeof(line), tmp_file);
+    fgets(line, sizeof(line), tmp_file);
     sscanf(line, "%hu %hu", &w, &h);
-    fgets(line, sizeof(line), imagefile);
+    fgets(line, sizeof(line), tmp_file);
+
+    long pos = ftell(tmp_file);
+    fclose(tmp_file);
+
+    imgfile = open(file, O_RDONLY);
+    if (imgfile < 0)
+        return NULL;
+
+    lseek(imgfile, pos, SEEK_SET);
 
     channels = 3;
     img = createimg(w, h, channels);
-    if (!img) {
-        fclose(imagefile);
+    if (img == NULL) {
+        close(imgfile);
         return NULL;
     }
-    /* Load image pixels */
-    for(i = 0; i < h; i++) {
-        row = &img->data[i * img->stride];
-        for(j = 0; j < w; j++) {
-            if (fread(buf, 1, 3, imagefile) != 3) {
-                freeimg(img);
-                fclose(imagefile);
-                return NULL;
-            }
-            pixel = &row[j * channels];
+
+    bytesread = 0, curr_pos = 0;
+
+    while((bytesread = read(imgfile, chunk, sizeof(chunk))) > 0){
+        for(i = 0; i < bytesread; i += channels) {
             for(ch = 0; ch < channels; ch++) {
-                pixel[ch] = buf[ch];
+                pixel[ch] = chunk[i + ch];
+            }
+            if(addpixel(img, pixel, &curr_pos) < 0) {
+                close(imgfile);
+                freeimg(img);
+                return NULL;
             }
         }
     }
 
-    fclose(imagefile);
+    close(imgfile);
     return img;
 }
 

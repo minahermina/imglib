@@ -30,7 +30,6 @@ ImagePtr createimg(uint16_t width, uint16_t height, uint8_t channels);
 void freeimg(ImagePtr img);
 ImgType imgtype(const char *file);
 ImagePtr loadimg(const char* file);
-int8_t addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos);
 ImagePtr loadppm(const char* file);
 uint8_t saveppm( ImagePtr img, const char *file);
 uint8_t saveimg( ImagePtr img, const char *file);

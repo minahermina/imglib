@@ -57,7 +57,7 @@ imgtype(const char *file)
     ssize_t bytesread;
     unsigned char magic[8];  // Buffer for magic numbers
     uint16_t magic_num;
-    
+
     fd = open(file, O_RDONLY);
     if (fd < 0) {
         fprintf(stderr, "Error opening file %s\n%s", file, strerror(errno));
@@ -66,13 +66,13 @@ imgtype(const char *file)
 
     bytesread = read(fd, magic, sizeof(magic));
     close(fd);
-    
+
     if (bytesread < 2) {
         return IMG_UNKNOWN;
     }
 
     magic_num = (magic[0] << 8) | magic[1];
-    
+
     switch(magic_num) {
         case 0x5036: return IMG_PPM_BIN;
         case 0x5033: return IMG_PPM_ASCII;
@@ -124,9 +124,9 @@ loadppm(const char* file)
     ImagePtr img;
     ssize_t imgfile;
     FILE* tmp_file;
-    uint8_t pixel[3], *row, channels, ch;
+    uint8_t pixel[3], channels, ch;
     uint16_t w, h;
-    uint32_t j, i, curr_pos, bytesread;
+    uint32_t i, curr_pos, bytesread;
     char line[MAX_LINE_LENGTH], chunk[CHUNK_SIZE];
 
     tmp_file = fopen(file, "rb");
@@ -287,6 +287,7 @@ loadimg(const char* file)
                 fprintf(stderr, "Error loading image: %s\n", file);
                 return NULL;
             }
+
             break;
         case IMG_PGM_BIN:
         case IMG_PGM_ASCII:
@@ -295,7 +296,7 @@ loadimg(const char* file)
         default:
             fprintf(stderr, "Unsupported or invalid image format\n");
     }
-    
+
     return img;
 }
 void 

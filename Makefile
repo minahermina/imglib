@@ -5,7 +5,7 @@ CFLAGS = -std=c99 -Wno-pedantic -Wall -O3 -ggdb  $(CPPFLAGS)
 LDFLAGS = -L. -limglib -Limglib
 
 # Source files and output
-SRCS = image.c
+SRC = image.c
 SHARED_LIB = libimglib.so
 
 EXAMPLE_SRC = main.c
@@ -14,9 +14,9 @@ EXAMPLE_TARGET = main
 all: $(SHARED_LIB)
 lib: $(SHARED_LIB)
 
-$(SHARED_LIB): image.c image.h
+$(SHARED_LIB): $(SRC) image.h
 	@echo "-- Compiling shared library: $@"
-	$(CC) $(CPPFLAGS) $(CFLAGS) -shared -fPIC -o $@ $<
+	$(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) -shared -fPIC -o $@
 
 example: lib
 	$(CC) $(CFLAGS) $(EXAMPLE_SRC) $(LDFLAGS) -o $(EXAMPLE_TARGET)

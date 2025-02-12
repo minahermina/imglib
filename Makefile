@@ -21,7 +21,7 @@ $(SHARED_LIB): $(SRC) image.h
 
 example: lib
 	@echo "\n-- Compiling $(EXAMPLE_SRC): $@"
-	$(CC) $(CFLAGS) $(LDFLAGS) $(EXAMPLE_SRC) -o $(EXAMPLE_TARGET)
+	$(CC) $(CFLAGS) $(EXAMPLE_SRC) -o $(EXAMPLE_TARGET) $(LDFLAGS) 
 
 clean:
 	rm -f $(SHARED_LIB) $(EXAMPLE_TARGET)

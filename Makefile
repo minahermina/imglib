@@ -2,7 +2,8 @@ CC = clang
 
 CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=700L -D_POSIX_C_SOURCE=200809L
 CFLAGS = -std=c99 -Wno-pedantic -Wall -O3 -ggdb  $(CPPFLAGS)
-LDFLAGS = -L. -limglib -Limglib
+LIB_DIR = ./build
+LDFLAGS = -L$(LIB_DIR)/ -Wl,-rpath=$(LIB_DIR) -limglib
 
 # Source files and output
 SRC = image.c
@@ -16,10 +17,11 @@ lib: $(SHARED_LIB)
 
 $(SHARED_LIB): $(SRC) image.h
 	@echo "-- Compiling shared library: $@"
-	$(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) -shared -fPIC -o $@
+	$(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) -shared -fPIC -o $(LIB_DIR)/$(SHARED_LIB)
 
 example: lib
-	$(CC) $(CFLAGS) $(EXAMPLE_SRC) $(LDFLAGS) -o $(EXAMPLE_TARGET)
+	@echo "\n-- Compiling $(EXAMPLE_SRC): $@"
+	$(CC) $(CFLAGS) $(LDFLAGS) $(EXAMPLE_SRC) -o $(EXAMPLE_TARGET)
 
 clean:
 	rm -f $(SHARED_LIB) $(EXAMPLE_TARGET)

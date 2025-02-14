@@ -325,7 +325,7 @@ int8_t
 dispimg(ImagePtr img, const char* imgviewer)
 {
     char template[] = "/tmp/img_XXXXXX";
-    char CMD[0xFFF];
+    char CMD[0xFF];
     int fd;
 
 

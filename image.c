@@ -16,6 +16,18 @@
 #define IMG_PIXEL_PTR(img, x, y) ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
 
 static inline uint32_t 
+#define VERIFY_MALLOC(ptr) \
+    if(ptr == NULL) {\
+        fprintf(stderr, "Buy more RAM LOL!\n");\
+        return NULL;\
+    }\
+
+#define VERIFY_PTR(ptr) \
+    if(ptr == NULL) {\
+        fprintf(stderr, "%s is NULL!\n", #ptr);\
+        return NULL;\
+    }\
+
 calc_stride(uint16_t width, uint8_t channels) {
     return (((uint32_t) width * (uint32_t)channels + 15) & ~(uint32_t)15);
 }

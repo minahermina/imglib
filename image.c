@@ -58,24 +58,10 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
 }
 
 
-/* TODO : Handle other image formats: PNG, JPG */
 ImgType 
 imgtype(const char *file)
 {
     ssize_t bytesread;
-    /* int fd;
-    unsigned char magic[8];  // Buffer for magic numbers
-    uint16_t magic_num;
-
-    fd = open(file, O_RDONLY);
-    if (fd < 0) {
-        fprintf(stderr, "Error opening file %s\n%s", file, strerror(errno));
-        return IMG_UNKNOWN;
-    }
-
-    bytesread = read(fd, magic, sizeof(magic));
-    close(fd); */
-
     FILE* f = fopen(file, "rb");
     unsigned int i;
     char magic[MAXLINE];
@@ -113,7 +99,7 @@ imgtype(const char *file)
     }
 }
 
-int8_t 
+int8_t
 addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
 {
     uint8_t *p, i;
@@ -142,7 +128,7 @@ addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
     return 1;
 }
 
-ImagePtr 
+ImagePtr
 loadppm(const char* file)
 {
     ImagePtr img;
@@ -234,7 +220,7 @@ savepnm(ImagePtr img, const char *file)
 }
 
 
-uint8_t 
+uint8_t
 saveimg( ImagePtr img, const char *file)
 {
     if(img == NULL || file == NULL || strlen(file) < 1) 
@@ -254,7 +240,7 @@ saveimg( ImagePtr img, const char *file)
 }
 
 
-void 
+void
 freeimg(ImagePtr img)
 {
     free(img->data);
@@ -262,7 +248,7 @@ freeimg(ImagePtr img)
 }
 
 
-int8_t 
+int8_t
 getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
@@ -319,7 +305,6 @@ loadimg(const char* file)
             break;
         case IMG_PGM_BIN:
         case IMG_PGM_ASCII:
-            // TODO: implement PGM loading
             break;
         default:
             fprintf(stderr, "Unsupported or invalid image format\n");
@@ -327,7 +312,8 @@ loadimg(const char* file)
 
     return img;
 }
-void 
+
+void
 printimg(ImagePtr img)
 {
     uint16_t i, j, k;

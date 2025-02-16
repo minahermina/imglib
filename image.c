@@ -212,7 +212,38 @@ saveppm(ImagePtr img, const char *file)
     return 1;
 }
 
+uint8_t
+savepgm(ImagePtr img, const char *file)
+{
+    FILE *fp;
+    uint32_t x, y;
+    uint8_t *row, *pixel;
 
+    if (img == NULL) {
+        fprintf(stderr, "img is NULL!");
+        return -1;
+    }
+
+    fp = fopen(file, "wb");
+    if (!fp)
+        return -1;
+
+    // Write header
+    fprintf(fp, "P5\n%d %d\n255\n", img->width, img->height);
+
+    for(y = 0; y < img->height; y++) {
+        row = &img->data[y * img->stride];
+        for(x = 0; x < img->width; x++) {
+            pixel = &row[x * img->channels];
+            if (fwrite(pixel, 1, img->channels, fp) != img->channels) {
+                fclose(fp);
+                return 0;
+            }
+        }
+    }
+    fclose(fp);
+    return 1;
+}
 uint8_t 
 saveimg( ImagePtr img, const char *file)
 {
@@ -223,6 +254,10 @@ saveimg( ImagePtr img, const char *file)
         case IMG_PPM_BIN:
         case IMG_PPM_ASCII:
             saveppm(img , file);
+            break;
+        case IMG_PGM_ASCII:
+        case IMG_PGM_BIN:
+            savepgm(img , file);
             break;
         default:
             return -1;

@@ -15,7 +15,6 @@
 
 #define IMG_PIXEL_PTR(img, x, y) ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
 
-static inline uint32_t 
 #define VERIFY_MALLOC(ptr) \
     if(ptr == NULL) {\
         fprintf(stderr, "Buy more RAM LOL!\n");\

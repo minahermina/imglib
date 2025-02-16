@@ -395,3 +395,37 @@ dispimg(ImagePtr img, const char* imgviewer)
 
     return 0;
 }
+
+
+ImagePtr
+rgb2gray(ImagePtr img)
+{
+    ImagePtr newimg;
+    uint16_t x,y;
+    uint8_t pixel[4] = {0, 0, 0, 0}, newpixel[1] = {0};
+
+    VERIFY_PTR(img);
+
+    newimg = (ImagePtr) malloc(sizeof(image));
+    VERIFY_MALLOC(newimg);
+
+    newimg->width = img->width;
+    newimg->height = img->height;
+    newimg->channels = 1;
+    newimg->type = IMG_PGM_BIN;
+    newimg->stride = calc_stride(newimg->width , 1);
+    newimg->data = (uint8_t*) malloc(newimg->height * newimg->stride);
+
+    VERIFY_MALLOC(newimg->data);
+
+    for(x = 0; x < newimg->width; ++x){
+        for(y = 0; y < newimg->height; ++y){
+            getpixel(img, x, y, pixel);
+            newpixel[0] = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
+            setpixel(newimg, x, y, newpixel);
+        }
+    }
+
+    return newimg;
+}
+

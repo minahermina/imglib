@@ -19,13 +19,13 @@
 #define HEX_TO_ASCII(hex) (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
 
 #define CHECK_ALLOC(ptr) \
-    if (!(ptr)) { \
+    if (ptr != NULL) { \
         fprintf(stderr, "Memory allocation failed: %s (line %d)\n", __FILE__, __LINE__); \
         return NULL; \
     }
 
 #define CHECK_PTR(ptr) \
-    if (!(ptr)) { \
+    if (ptr == NULL) { \
         fprintf(stderr, "Error: %s is NULL! (line %d, file %s)\n", #ptr, __LINE__, __FILE__); \
         return NULL; \
     }

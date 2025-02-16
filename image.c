@@ -4,9 +4,9 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <string.h>
-#include <errno.h>
 
 #include "image.h"
 

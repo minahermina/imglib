@@ -10,7 +10,7 @@
 
 #include "image.h"
 
-#define MAX_LINE_LENGTH 200
+#define MAXLINE 1024
 #define CHUNK_SIZE 8193
 
 #define IMG_PIXEL_PTR(img, x, y) ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
@@ -62,8 +62,8 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
 ImgType 
 imgtype(const char *file)
 {
-      int fd;
     ssize_t bytesread;
+    /* int fd;
     unsigned char magic[8];  // Buffer for magic numbers
     uint16_t magic_num;
 
@@ -74,25 +74,41 @@ imgtype(const char *file)
     }
 
     bytesread = read(fd, magic, sizeof(magic));
-    close(fd);
+    close(fd); */
 
-    if (bytesread < 2) {
-        return IMG_UNKNOWN;
+    FILE* f = fopen(file, "rb");
+    unsigned int i;
+    char magic[MAXLINE];
+    uint64_t magic_;
+    char line[MAXLINE];
+
+    /* Read the PNM/PFM file header. */
+    while (fgets(line, MAXLINE, f) != NULL) {
+        int flag = 0;
+        for (i = 0; i < strlen(line); i++) {
+            if (isgraph(line[i])) {
+                if ((line[i] == '#') && (flag == 0)) {
+                    flag = 1;
+                }
+            }
+        }
+        if (flag == 0) {
+            sscanf(line, "%2s", magic);
+            break;
+        }
     }
 
-    magic_num = (magic[0] << 8) | magic[1];
+    magic_ = (magic[0] << 8) | magic[1];
 
-    switch(magic_num) {
-        case 0x5036: return IMG_PPM_BIN;
-        case 0x5033: return IMG_PPM_ASCII;
-        case 0x5035: return IMG_PGM_BIN;
-        case 0x5032: return IMG_PGM_ASCII;
-        case 0x8950: return IMG_PNG;
-        case 0xFFD8: return IMG_JPG;
-        case 0x424D: return IMG_BMP;
-        case 0x4749: return IMG_GIF;
-        case 0x4949:
-        case 0x4D4D: return IMG_TIFF;
+    switch(magic_) {
+        case IMG_PPM_BIN: 
+            return IMG_PPM_BIN;
+        case IMG_PPM_ASCII: 
+            return IMG_PPM_ASCII;
+        case IMG_PGM_BIN: 
+            return IMG_PGM_BIN;
+        case IMG_PGM_ASCII: 
+            return IMG_PGM_ASCII;
         default: return IMG_UNKNOWN;
     }
 }
@@ -135,7 +151,7 @@ loadppm(const char* file)
     uint8_t pixel[3], channels, ch;
     uint16_t w, h;
     uint32_t i, curr_pos, bytesread;
-    char line[MAX_LINE_LENGTH], chunk[CHUNK_SIZE];
+    char line[MAXLINE], chunk[CHUNK_SIZE];
 
     tmp_file = fopen(file, "rb");
     if (tmp_file == NULL)
@@ -181,6 +197,7 @@ loadppm(const char* file)
     close(imgfile);
     return img;
 }
+
 
 uint8_t
 savepnm(ImagePtr img, const char *file)

@@ -15,17 +15,19 @@
 
 #define IMG_PIXEL_PTR(img, x, y) ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
 
-#define VERIFY_MALLOC(ptr) \
-    if(ptr == NULL) {\
-        fprintf(stderr, "Buy more RAM LOL!\n");\
-        return NULL;\
-    }\
 
-#define VERIFY_PTR(ptr) \
-    if(ptr == NULL) {\
-        fprintf(stderr, "%s is NULL!\n", #ptr);\
-        return NULL;\
-    }\
+#define CHECK_ALLOC(ptr) \
+    if (!(ptr)) { \
+        fprintf(stderr, "Memory allocation failed: %s (line %d)\n", __FILE__, __LINE__); \
+        return NULL; \
+    }
+
+#define CHECK_PTR(ptr) \
+    if (!(ptr)) { \
+        fprintf(stderr, "Error: %s is NULL! (line %d, file %s)\n", #ptr, __LINE__, __FILE__); \
+        return NULL; \
+    }
+
 
 static inline uint32_t
 calc_stride(uint16_t width, uint8_t channels) {
@@ -37,11 +39,11 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
 {
     ImagePtr img;
     img = (ImagePtr) calloc(1, sizeof(image));
-    VERIFY_MALLOC(img)
+    CHECK_ALLOC(img)
 
     img->stride = calc_stride(width, channels);
     img->data = (uint8_t*) malloc(height * img->stride);
-    VERIFY_MALLOC(img->data);
+    CHECK_PTR(img->data);
 
     memset(img->data, 0, height * img->stride);
 
@@ -404,10 +406,10 @@ rgb2gray(ImagePtr img)
     uint16_t x,y;
     uint8_t pixel[4] = {0, 0, 0, 0}, newpixel[1] = {0};
 
-    VERIFY_PTR(img);
+    CHECK_PTR(img);
 
     newimg = (ImagePtr) malloc(sizeof(image));
-    VERIFY_MALLOC(newimg);
+    CHECK_ALLOC(newimg);
 
     newimg->width = img->width;
     newimg->height = img->height;
@@ -416,7 +418,7 @@ rgb2gray(ImagePtr img)
     newimg->stride = calc_stride(newimg->width , 1);
     newimg->data = (uint8_t*) malloc(newimg->height * newimg->stride);
 
-    VERIFY_MALLOC(newimg->data);
+    CHECK_ALLOC(newimg->data);
 
     for(x = 0; x < newimg->width; ++x){
         for(y = 0; y < newimg->height; ++y){

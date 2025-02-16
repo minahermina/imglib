@@ -27,6 +27,7 @@
         return NULL;\
     }\
 
+static inline uint32_t
 calc_stride(uint16_t width, uint8_t channels) {
     return (((uint32_t) width * (uint32_t)channels + 15) & ~(uint32_t)15);
 }

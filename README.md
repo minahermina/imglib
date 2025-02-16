@@ -12,19 +12,26 @@
 - Written in clean and minimal C code
 - Compatible with all Unix-like systems
 - Portable `Makefile`
-- Supports only PPM format for now (future support for other formats may be added)
+- Supports only [PNM](https://netpbm.sourceforge.net/doc/pnm.html) formats (partially), with possible future support for other formats
 
 ## Usage
-- Include the library in your C project by adding `#include "image.h"` to your source code. 
 
+1. **Include the library** in your C project:  
+   ```c
+   #include "image.h"
+   ```
+   ```sh
+   # Step 1: Build the shared library (creates build/libimglib.so)
+    make  
 
-Compile with:
-```sh
-gcc -o main.c main.c -L./build -limglib
-export LD_LIBRARY_PATH="./build/:$LD_LIBRARY_PATH"
-./main
+    # Step 2: Compile your program, linking against imglib
+    gcc -o main main.c -L./build -limglib  
 
-```
+    # Step 3: Set the library path and run the program
+    export LD_LIBRARY_PATH="./build/:$LD_LIBRARY_PATH"
+    ./main
+    ```
+
 - For a complete example of how to use the library, refer to the main.c file in the repository. It demonstrates loading an image, manipulating pixel data, saving the modified image, and displaying it using an external viewer.
 
 ## Makefile

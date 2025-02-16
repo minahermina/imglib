@@ -32,6 +32,7 @@ ImgType imgtype(const char *file);
 ImagePtr loadimg(const char* file);
 ImagePtr loadppm(const char* file);
 uint8_t saveppm( ImagePtr img, const char *file);
+uint8_t savepgm( ImagePtr img, const char *file);
 uint8_t saveimg( ImagePtr img, const char *file);
 int8_t getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
 int8_t setpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);

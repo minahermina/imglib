@@ -8,11 +8,6 @@ typedef enum {
     IMG_PPM_ASCII = 0x5033,  // P3
     IMG_PGM_BIN = 0x5035,    // P5
     IMG_PGM_ASCII = 0x5032,  // P2
-    IMG_PNG = 0x8950,        // \x89P
-    IMG_JPG = 0xFFD8,        // \xFF\xD8
-    IMG_BMP = 0x424D,        // BM
-    IMG_GIF = 0x4749,        // GI
-    IMG_TIFF = 0x4949        // II
 } ImgType;
 
 typedef struct {

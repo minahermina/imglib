@@ -61,7 +61,6 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
 ImgType 
 imgtype(const char *file)
 {
-    ssize_t bytesread;
     FILE* f = fopen(file, "rb");
     unsigned int i;
     char magic[MAXLINE];
@@ -191,7 +190,6 @@ savepnm(ImagePtr img, const char *file)
     FILE *fp;
     uint32_t x, y;
     uint8_t *row, *pixel;
-    char str[10];
 
     if (img == NULL) {
         fprintf(stderr, "img is NULL!");

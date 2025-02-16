@@ -15,6 +15,7 @@ all: $(SHARED_LIB)
 lib: $(SHARED_LIB)
 
 $(SHARED_LIB): $(SRC) image.h
+	mkdir -p $(LIB_DIR)
 	@echo "-- Compiling shared library: $@"
 	$(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) -shared -fPIC -o $(SHARED_LIB)
 

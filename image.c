@@ -15,6 +15,8 @@
 
 #define IMG_PIXEL_PTR(img, x, y) ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
 
+/*TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
+#define HEX_TO_ASCII(hex) (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
 
 #define CHECK_ALLOC(ptr) \
     if (!(ptr)) { \
@@ -124,7 +126,6 @@ addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
     return 1;
 }
 
-/* TODO : handle other PPM formats (PGM)*/
 ImagePtr 
 loadppm(const char* file)
 {
@@ -182,11 +183,12 @@ loadppm(const char* file)
 }
 
 uint8_t
-saveppm(ImagePtr img, const char *file)
+savepnm(ImagePtr img, const char *file)
 {
     FILE *fp;
     uint32_t x, y;
     uint8_t *row, *pixel;
+    char str[10];
 
     if (img == NULL) {
         fprintf(stderr, "img is NULL!");
@@ -198,7 +200,7 @@ saveppm(ImagePtr img, const char *file)
         return -1;
 
     // Write header
-    fprintf(fp, "P6\n%d %d\n255\n", img->width, img->height);
+    fprintf(fp, "%s\n%d %d\n255\n", HEX_TO_ASCII(img->type), img->width, img->height);
 
     for(y = 0; y < img->height; y++) {
         row = &img->data[y * img->stride];
@@ -214,38 +216,7 @@ saveppm(ImagePtr img, const char *file)
     return 1;
 }
 
-uint8_t
-savepgm(ImagePtr img, const char *file)
-{
-    FILE *fp;
-    uint32_t x, y;
-    uint8_t *row, *pixel;
 
-    if (img == NULL) {
-        fprintf(stderr, "img is NULL!");
-        return -1;
-    }
-
-    fp = fopen(file, "wb");
-    if (!fp)
-        return -1;
-
-    // Write header
-    fprintf(fp, "P5\n%d %d\n255\n", img->width, img->height);
-
-    for(y = 0; y < img->height; y++) {
-        row = &img->data[y * img->stride];
-        for(x = 0; x < img->width; x++) {
-            pixel = &row[x * img->channels];
-            if (fwrite(pixel, 1, img->channels, fp) != img->channels) {
-                fclose(fp);
-                return 0;
-            }
-        }
-    }
-    fclose(fp);
-    return 1;
-}
 uint8_t 
 saveimg( ImagePtr img, const char *file)
 {
@@ -255,11 +226,9 @@ saveimg( ImagePtr img, const char *file)
     switch (img->type) {
         case IMG_PPM_BIN:
         case IMG_PPM_ASCII:
-            saveppm(img , file);
-            break;
         case IMG_PGM_ASCII:
         case IMG_PGM_BIN:
-            savepgm(img , file);
+            savepnm(img , file);
             break;
         default:
             return -1;

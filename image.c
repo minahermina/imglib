@@ -127,6 +127,7 @@ addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
     return 1;
 }
 
+/* TODO: create a fucntion called loadpnm to handle PPM && PGM formats*/
 ImagePtr
 loadppm(const char* file)
 {

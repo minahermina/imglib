@@ -86,24 +86,48 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
     return img;
 }
 
-
-void
-freeimg(ImagePtr img)
+ImagePtr
+loadimg(const char* file)
 {
-    free(img->data);
-    free(img);
+    if(strlen(file) < 1 )
+        return NULL;
+
+    ImagePtr img = NULL;
+    int64_t type = imgtype(file);
+
+    switch(type) {
+        case IMG_PPM_BIN:
+        case IMG_PPM_ASCII:
+            img = loadppm(file);
+            if (img) {
+                img->type = type;
+            }else{
+                fprintf(stderr, "Error loading image: %s\n", file);
+                return NULL;
+            }
+
+            break;
+        case IMG_PGM_BIN:
+        case IMG_PGM_ASCII:
+            break;
+        default:
+            fprintf(stderr, "Unsupported or invalid image format\n");
+    }
+
+    return img;
 }
 
 ImgType
 imgtype(const char *file)
 {
-    FILE* f = fopen(file, "rb");
+    FILE* f;
     unsigned int i;
     char magic[MAXLINE];
     uint64_t magic_;
     char line[MAXLINE];
 
     /* Read the PNM/PFM file header. */
+    f = fopen(file, "rb");
     while (fgets(line, MAXLINE, f) != NULL) {
         int flag = 0;
         for (i = 0; i < strlen(line); i++) {
@@ -122,47 +146,16 @@ imgtype(const char *file)
     magic_ = (magic[0] << 8) | magic[1];
 
     switch(magic_) {
-        case IMG_PPM_BIN: 
+        case IMG_PPM_BIN:
             return IMG_PPM_BIN;
-        case IMG_PPM_ASCII: 
+        case IMG_PPM_ASCII:
             return IMG_PPM_ASCII;
-        case IMG_PGM_BIN: 
+        case IMG_PGM_BIN:
             return IMG_PGM_BIN;
-        case IMG_PGM_ASCII: 
+        case IMG_PGM_ASCII:
             return IMG_PGM_ASCII;
         default: return IMG_UNKNOWN;
     }
-}
-
-ImagePtr
-loadimg(const char* file)
-{
-    if(strlen(file) < 1 ) 
-        return NULL;
-
-    ImagePtr img = NULL;
-    int64_t type = imgtype(file);
-
-    switch(type) {
-        case IMG_PPM_BIN:
-        case IMG_PPM_ASCII:
-            img = loadppm(file);
-            if (img){
-                img->type = type;
-            }else{
-                fprintf(stderr, "Error loading image: %s\n", file);
-                return NULL;
-            }
-
-            break;
-        case IMG_PGM_BIN:
-        case IMG_PGM_ASCII:
-            break;
-        default:
-            fprintf(stderr, "Unsupported or invalid image format\n");
-    }
-
-    return img;
 }
 
 /* TODO: create a fucntion called loadpnm to handle PPM && PGM formats*/
@@ -222,62 +215,6 @@ loadppm(const char* file)
     return img;
 }
 
-
-
-
-uint8_t
-savepnm(ImagePtr img, const char *file)
-{
-    FILE *fp;
-    uint32_t x, y;
-    uint8_t *row, *pixel;
-
-    if (img == NULL) {
-        fprintf(stderr, "img is NULL!");
-        return -1;
-    }
-
-    fp = fopen(file, "wb");
-    if (!fp)
-        return -1;
-
-    // Write header
-    fprintf(fp, "%s\n%d %d\n255\n", HEX_TO_ASCII(img->type), img->width, img->height);
-
-    for(y = 0; y < img->height; y++) {
-        row = &img->data[y * img->stride];
-        for(x = 0; x < img->width; x++) {
-            pixel = &row[x * img->channels];
-            if (fwrite(pixel, 1, img->channels, fp) != img->channels) {
-                fclose(fp);
-                return 0;
-            }
-        }
-    }
-    fclose(fp);
-    return 1;
-}
-
-
-uint8_t
-saveimg( ImagePtr img, const char *file)
-{
-    if(img == NULL || file == NULL || strlen(file) < 1) 
-        return -1;
-
-    switch (img->type) {
-        case IMG_PPM_BIN:
-        case IMG_PPM_ASCII:
-        case IMG_PGM_ASCII:
-        case IMG_PGM_BIN:
-            savepnm(img , file);
-            break;
-        default:
-            return -1;
-    }
-    return 1;
-}
-
 int8_t
 getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
@@ -312,6 +249,65 @@ setpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
     return 1;
 }
 
+uint8_t
+saveimg(ImagePtr img, const char *file)
+{
+    if(img == NULL || file == NULL || strlen(file) < 1)
+        return -1;
+
+    switch (img->type) {
+        case IMG_PPM_BIN:
+        case IMG_PPM_ASCII:
+        case IMG_PGM_ASCII:
+        case IMG_PGM_BIN:
+            savepnm(img , file);
+            break;
+        default:
+            return -1;
+    }
+    return 1;
+}
+
+uint8_t
+savepnm(ImagePtr img, const char *file)
+{
+    FILE *fp;
+    uint32_t x, y;
+    uint8_t *row, *pixel;
+
+    if (img == NULL) {
+        fprintf(stderr, "img is NULL!");
+        return -1;
+    }
+
+    fp = fopen(file, "wb");
+    if (!fp)
+        return -1;
+
+    // Write header
+    fprintf(fp, "%s\n%d %d\n255\n", HEX_TO_ASCII(img->type), img->width, img->height);
+
+    for(y = 0; y < img->height; y++) {
+        row = &img->data[y * img->stride];
+        for(x = 0; x < img->width; x++) {
+            pixel = &row[x * img->channels];
+            if (fwrite(pixel, 1, img->channels, fp) != img->channels) {
+                fclose(fp);
+                return 0;
+            }
+        }
+    }
+    fclose(fp);
+    return 1;
+}
+
+void
+freeimg(ImagePtr img)
+{
+    free(img->data);
+    free(img);
+}
+
 void
 printimg(ImagePtr img)
 {
@@ -326,8 +322,9 @@ printimg(ImagePtr img)
         for(j = 0; j < img->width; j++) {
             printf("{ ");
             getpixel(img, j, i, pixel);
-            for(k = 0; k < img->channels; k++) 
+            for(k = 0; k < img->channels; k++) {
                 printf("%hu ",pixel[k]);
+            }
             printf("},");
         }
         printf("\n");
@@ -390,8 +387,8 @@ rgb2gray(ImagePtr img)
 
     CHECK_ALLOC(newimg->data);
 
-    for(x = 0; x < newimg->width; ++x){
-        for(y = 0; y < newimg->height; ++y){
+    for(x = 0; x < newimg->width; ++x) {
+        for(y = 0; y < newimg->height; ++y) {
             getpixel(img, x, y, pixel);
             newpixel[0] = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
             setpixel(newimg, x, y, newpixel);
@@ -400,4 +397,3 @@ rgb2gray(ImagePtr img)
 
     return newimg;
 }
-

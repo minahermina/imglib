@@ -12,6 +12,10 @@ typedef enum {
 
 typedef struct {
     uint8_t *data;
+    /* 
+    - read this https://medium.com/@oleg.shipitko/what-does-stride-mean-in-image-processing-bba158a72bcd
+    - read about memory access patterns
+    */
     uint32_t stride;
     uint16_t width;
     uint16_t height;
@@ -22,14 +26,14 @@ typedef struct {
 typedef image *ImagePtr;
 
 ImagePtr createimg(uint16_t width, uint16_t height, uint8_t channels);
-void freeimg(ImagePtr img);
-ImgType imgtype(const char *file);
 ImagePtr loadimg(const char* file);
+ImgType imgtype(const char *file);
 ImagePtr loadppm(const char* file);
-uint8_t savepnm( ImagePtr img, const char *file);
-uint8_t saveimg( ImagePtr img, const char *file);
 int8_t getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
 int8_t setpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
+uint8_t savepnm( ImagePtr img, const char *file);
+uint8_t saveimg( ImagePtr img, const char *file);
+void freeimg(ImagePtr img);
 void printimg(ImagePtr img);
 int8_t dispimg(ImagePtr img, const char* custom_viewer);
 

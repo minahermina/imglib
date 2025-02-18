@@ -32,5 +32,4 @@
 
 ## General Enhancements
 
-- [ ] **Optimization and Performance Improvements**: Refine existing code for better efficiency and speed.
 - [ ] **Unit Testing Suite**: Establish a robust set of tests to ensure code reliability and facilitate future development.

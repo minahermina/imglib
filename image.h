@@ -32,7 +32,8 @@ int8_t getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
 int8_t setpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
 void printimg(ImagePtr img);
 int8_t dispimg(ImagePtr img, const char* custom_viewer);
-/*Image manipulation Functions*/
+
+/*Image Processing Functions*/
 ImagePtr rgb2gray(ImagePtr img);
 
 

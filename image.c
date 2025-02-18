@@ -36,11 +36,40 @@ calc_stride(uint16_t width, uint8_t channels) {
     return (((uint32_t) width * (uint32_t)channels + 15) & ~(uint32_t)15);
 }
 
+int8_t
+addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
+{
+    uint8_t *p, i;
+    uint32_t x, y;
+
+    if (img == NULL || pixel == NULL || current_pos == NULL) {
+        fprintf(stderr, "Error: Invalid input (img, pixel, or position is NULL).\n");
+        return -1;
+    }
+
+    if (*current_pos >= (uint32_t)(img->width * img->height)) {
+        fprintf(stderr, "Error: Exceeded image capacity.\n");
+        return -1;
+    }
+
+    x = *current_pos % img->width;
+    y = *current_pos / img->width;
+    p = IMG_PIXEL_PTR(img, x, y);
+
+    for (i = 0; i < img->channels; i++) {
+        p[i] = pixel[i];
+    }
+
+    (*current_pos)++;
+
+    return 1;
+}
+
 ImagePtr 
 createimg(uint16_t width, uint16_t height, uint8_t channels)
 {
     ImagePtr img;
-    img = (ImagePtr) calloc(1, sizeof(image));
+    img = (ImagePtr) malloc( sizeof(image));
     CHECK_ALLOC(img)
 
     img->stride = calc_stride(width, channels);
@@ -58,7 +87,14 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
 }
 
 
-ImgType 
+void
+freeimg(ImagePtr img)
+{
+    free(img->data);
+    free(img);
+}
+
+ImgType
 imgtype(const char *file)
 {
     FILE* f = fopen(file, "rb");
@@ -98,33 +134,35 @@ imgtype(const char *file)
     }
 }
 
-int8_t
-addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
+ImagePtr
+loadimg(const char* file)
 {
-    uint8_t *p, i;
-    uint32_t x, y;
+    if(strlen(file) < 1 ) 
+        return NULL;
 
-    if (img == NULL || pixel == NULL || current_pos == NULL) {
-        fprintf(stderr, "Error: Invalid input (img, pixel, or position is NULL).\n");
-        return -1;
+    ImagePtr img = NULL;
+    int64_t type = imgtype(file);
+
+    switch(type) {
+        case IMG_PPM_BIN:
+        case IMG_PPM_ASCII:
+            img = loadppm(file);
+            if (img){
+                img->type = type;
+            }else{
+                fprintf(stderr, "Error loading image: %s\n", file);
+                return NULL;
+            }
+
+            break;
+        case IMG_PGM_BIN:
+        case IMG_PGM_ASCII:
+            break;
+        default:
+            fprintf(stderr, "Unsupported or invalid image format\n");
     }
 
-    if (*current_pos >= (uint32_t)(img->width * img->height)) {
-        fprintf(stderr, "Error: Exceeded image capacity.\n");
-        return -1;
-    }
-
-    x = *current_pos % img->width;
-    y = *current_pos / img->width;
-    p = IMG_PIXEL_PTR(img, x, y);
-
-    for (i = 0; i < img->channels; i++) {
-        p[i] = pixel[i];
-    }
-
-    (*current_pos)++;
-
-    return 1;
+    return img;
 }
 
 /* TODO: create a fucntion called loadpnm to handle PPM && PGM formats*/
@@ -185,6 +223,8 @@ loadppm(const char* file)
 }
 
 
+
+
 uint8_t
 savepnm(ImagePtr img, const char *file)
 {
@@ -238,15 +278,6 @@ saveimg( ImagePtr img, const char *file)
     return 1;
 }
 
-
-void
-freeimg(ImagePtr img)
-{
-    free(img->data);
-    free(img);
-}
-
-
 int8_t
 getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
@@ -279,37 +310,6 @@ setpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
     }
 
     return 1;
-}
-
-ImagePtr
-loadimg(const char* file)
-{
-    if(strlen(file) < 1 ) 
-        return NULL;
-
-    ImagePtr img = NULL;
-    int64_t type = imgtype(file);
-
-    switch(type) {
-        case IMG_PPM_BIN:
-        case IMG_PPM_ASCII:
-            img = loadppm(file);
-            if (img){
-                img->type = type;
-            }else{
-                fprintf(stderr, "Error loading image: %s\n", file);
-                return NULL;
-            }
-
-            break;
-        case IMG_PGM_BIN:
-        case IMG_PGM_ASCII:
-            break;
-        default:
-            fprintf(stderr, "Unsupported or invalid image format\n");
-    }
-
-    return img;
 }
 
 void
@@ -368,7 +368,6 @@ dispimg(ImagePtr img, const char* imgviewer)
 
     return 0;
 }
-
 
 ImagePtr
 rgb2gray(ImagePtr img)

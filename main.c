@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include "image.h"
+#include "src/image.h"
 
 int main(int argc, char const *argv[]) {
     const char *out_file;

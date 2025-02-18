@@ -96,7 +96,7 @@ loadimg(const char* file)
     int64_t type = imgtype(file);
 
     switch(type) {
-        case IMG_PPM_BIN:
+        case IMG_PPM_BIN: /* FALLTHROUGH */
         case IMG_PPM_ASCII:
             img = loadppm(file);
             if (img) {
@@ -256,7 +256,7 @@ saveimg(ImagePtr img, const char *file)
         return -1;
 
     switch (img->type) {
-        case IMG_PPM_BIN:
+        case IMG_PPM_BIN: /* FALLTHROUGH */
         case IMG_PPM_ASCII:
         case IMG_PGM_ASCII:
         case IMG_PGM_BIN:

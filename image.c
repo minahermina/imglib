@@ -19,7 +19,7 @@
 #define HEX_TO_ASCII(hex) (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
 
 #define CHECK_ALLOC(ptr) \
-    if (ptr != NULL) { \
+    if (ptr == NULL) { \
         fprintf(stderr, "Memory allocation failed: %s (line %d)\n", __FILE__, __LINE__); \
         return NULL; \
     }

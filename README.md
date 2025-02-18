@@ -40,3 +40,9 @@ The `Makefile` is written to be portable across different Unix systems, avoiding
 - `make lib`: Compiles the shared object (`.so`) for the library.
 - `make example`: Compiles `main.c` as an example program using the library. The example program demonstrates loading an image and accessing pixel data:
 - `make clean`: Removes compiled objects and binaries.
+
+
+## Future Plans
+
+For a detailed list of planned features and enhancements, check out the [`TODO.md`](TODO.md) file. Here are some highlights of what's coming next:
+

@@ -32,5 +32,6 @@
 
 ## General Enhancements
 
+- [ ] **Add Changelog**:
 - [ ] **Add Documentation**: Write comprehensive documentation to explain the library's API and usage.
 - [ ] **Unit Testing Suite**: Establish a robust set of tests to ensure code reliability and facilitate future development.

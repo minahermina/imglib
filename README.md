@@ -1,11 +1,12 @@
-# imglib
-
-`imglib` is a minimal and portable C library for image manipulation, designed to be simple and efficient while adhering to the **Suckless C coding style**. It is intended to be **portable across all Unix systems** and comes with a **portable Makefile** that works with different `make` implementations.
-
 ## ⚠️ Warning
 
 > ⚠️  Expect dirty, spaghetti, smelly code! <br>
 >  This project is a learning exercise, and the code may not be pretty or optimized. I'm still learning, so bear with me as I improve over time. Feedbacks are welcome!
+
+# imglib
+
+`imglib` is a minimal and portable C library for image manipulation, designed to be simple and efficient while adhering to the **Suckless C coding style**. It is intended to be **portable across all Unix systems** and comes with a **portable Makefile** that works with different `make` implementations.
+
 
 ## Features
 - Lightweight and dependency-free (where possible)

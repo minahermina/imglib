@@ -1,7 +1,7 @@
 ## ⚠️ Warning
 
-> ⚠️  Expect dirty, spaghetti, smelly code! <br>
->  This project is a learning exercise, and the code may not be pretty or optimized. I'm still learning, so bear with me as I improve over time. Feedbacks are welcome!
+> - This project is a learning exercise, and the code may not be pretty or optimized. I'm still learning, so bear with me as I improve over time. Feedbacks are welcome! <br>
+> - Expect dirty, spaghetti, smelly, and buggy code! <br>
 
 # imglib
 

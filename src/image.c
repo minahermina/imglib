@@ -96,17 +96,15 @@ loadimg(const char* file)
     switch(type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
         case IMG_PPM_ASCII:
-            img = loadppm(file);
+        case IMG_PGM_BIN:
+        case IMG_PGM_ASCII:
+            img = loadpnm(file, type);
             if (img) {
                 img->type = type;
             }else{
                 fprintf(stderr, "Error loading image: %s\n", file);
                 return NULL;
             }
-
-            break;
-        case IMG_PGM_BIN:
-        case IMG_PGM_ASCII:
             break;
         default:
             fprintf(stderr, "Unsupported or invalid image format\n");
@@ -160,7 +158,7 @@ imgtype(const char *file)
 
 /* TODO: create a fucntion called loadpnm to handle PPM && PGM formats*/
 ImagePtr
-loadppm(const char* file)
+loadpnm(const char* file, ImgType type)
 {
     ImagePtr img;
     ssize_t imgfile;
@@ -174,11 +172,40 @@ loadppm(const char* file)
     if (tmp_file == NULL)
         return NULL;
 
-    /* Read header */
-    fgets(line, sizeof(line), tmp_file);
-    fgets(line, sizeof(line), tmp_file);
-    sscanf(line, "%hu %hu", &w, &h);
-    fgets(line, sizeof(line), tmp_file);
+    switch(type) {
+        case IMG_PPM_BIN: /* FALLTHROUGH */
+        case IMG_PPM_ASCII:
+            channels = 3;
+            break;
+        case IMG_PGM_BIN: /* FALLTHROUGH */
+        case IMG_PGM_ASCII:
+            channels = 1;
+            break;
+        default:
+            break;
+    }
+
+    if (!fgets(line, sizeof(line), tmp_file)) {
+        fclose(tmp_file);
+        return NULL;
+    }  /* Read PNM magic number*/
+
+    do {
+        if (!fgets(line, sizeof(line), tmp_file)) {
+            fclose(tmp_file); return NULL;
+        }
+    } while (line[0] == '#'); /* Read width & height*/
+
+    if (!sscanf(line, "%hu %hu", &w, &h) ) {
+        fclose(tmp_file);
+        return NULL;
+    }
+
+    do {
+        if (!fgets(line, sizeof(line), tmp_file)) {
+            fclose(tmp_file); return NULL;
+        }
+    } while (line[0] == '#'); /* Ignore depth info, typically 255*/
 
     long pos = ftell(tmp_file);
     fclose(tmp_file);
@@ -189,7 +216,6 @@ loadppm(const char* file)
 
     lseek(imgfile, pos, SEEK_SET);
 
-    channels = 3;
     img = createimg(w, h, channels);
     if (img == NULL) {
         close(imgfile);

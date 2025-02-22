@@ -22,7 +22,7 @@
     CHECK_COND(ptr == NULL, "Memmory Allocation failed", NULL)\
 
 #define CHECK_PTR(ptr, ret_val) \
-    CHECK_COND(ptr == NULL," ", ret_val) \
+    CHECK_COND(ptr == NULL, " ", ret_val) \
 
 #define CHECK_COND(ex, msg, ret_val) \
     if (ex) { \
@@ -31,11 +31,12 @@
     }
 
 static inline uint32_t
-calc_stride(uint16_t width, uint8_t channels) {
+calc_stride(uint16_t width, uint8_t channels) 
+{
     return (((uint32_t) width * (uint32_t)channels + 15) & ~(uint32_t)15);
 }
 
-int8_t
+static int8_t
 addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
 {
     uint8_t *p, i;
@@ -156,7 +157,7 @@ imgtype(const char *file)
     }
 }
 
-/* TODO: create a fucntion called loadpnm to handle PPM && PGM formats*/
+/* TODO: Optimize this funciton*/
 ImagePtr
 loadpnm(const char* file, ImgType type)
 {
@@ -423,3 +424,4 @@ rgb2gray(ImagePtr img)
 
     return newimg;
 }
+

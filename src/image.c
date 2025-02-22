@@ -19,17 +19,16 @@
 #define HEX_TO_ASCII(hex) (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
 
 #define CHECK_ALLOC(ptr) \
-    if (ptr == NULL) { \
-        fprintf(stderr, "Memory allocation failed: %s (line %d)\n", __FILE__, __LINE__); \
-        return NULL; \
-    }
+    CHECK_COND(ptr == NULL, "Memmory Allocation failed", NULL)\
 
-#define CHECK_PTR(ptr) \
-    if (ptr == NULL) { \
-        fprintf(stderr, "Error: %s is NULL! (line %d, file %s)\n", #ptr, __LINE__, __FILE__); \
-        return NULL; \
-    }
+#define CHECK_PTR(ptr, ret_val) \
+    CHECK_COND(ptr == NULL," ", ret_val) \
 
+#define CHECK_COND(ex, msg, ret_val) \
+    if (ex) { \
+        fprintf(stderr, "Error: (%s) is True!\n(function: %s, line %d, file %s)\n", #ex, __func__, __LINE__, __FILE__); \
+        return ret_val; \
+    }
 
 static inline uint32_t
 calc_stride(uint16_t width, uint8_t channels) {
@@ -74,7 +73,7 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
 
     img->stride = calc_stride(width, channels);
     img->data = (uint8_t*) malloc(height * img->stride);
-    CHECK_PTR(img->data);
+    CHECK_PTR(img->data, NULL);
 
     memset(img->data, 0, height * img->stride);
 
@@ -89,11 +88,10 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
 ImagePtr
 loadimg(const char* file)
 {
-    if(strlen(file) < 1 )
-        return NULL;
+    CHECK_COND(file == NULL , "" ,NULL );
 
     ImagePtr img = NULL;
-    int64_t type = imgtype(file);
+    ImgType type = imgtype(file);
 
     switch(type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
@@ -128,6 +126,8 @@ imgtype(const char *file)
 
     /* Read the PNM/PFM file header. */
     f = fopen(file, "rb");
+
+    CHECK_PTR(f, IMG_UNKNOWN);
     while (fgets(line, MAXLINE, f) != NULL) {
         int flag = 0;
         for (i = 0; i < strlen(line); i++) {
@@ -373,7 +373,7 @@ rgb2gray(ImagePtr img)
     uint16_t x,y;
     uint8_t pixel[4] = {0, 0, 0, 0}, newpixel[1] = {0};
 
-    CHECK_PTR(img);
+    CHECK_PTR(img, NULL);
 
     newimg = (ImagePtr) malloc(sizeof(image));
     CHECK_ALLOC(newimg);

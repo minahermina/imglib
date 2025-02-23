@@ -65,8 +65,8 @@ addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
     return 1;
 }
 
-ImagePtr 
-createimg(uint16_t width, uint16_t height, uint8_t channels)
+ImagePtr
+img_create(uint16_t width, uint16_t height, uint8_t channels)
 {
     ImagePtr img;
     img = (ImagePtr) malloc( sizeof(image));
@@ -87,19 +87,19 @@ createimg(uint16_t width, uint16_t height, uint8_t channels)
 }
 
 ImagePtr
-loadimg(const char* file)
+img_load(const char* file)
 {
     CHECK_COND(file == NULL , "" ,NULL );
 
     ImagePtr img = NULL;
-    ImgType type = imgtype(file);
+    ImgType type = img_type(file);
 
     switch(type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
         case IMG_PPM_ASCII:
         case IMG_PGM_BIN:
         case IMG_PGM_ASCII:
-            img = loadpnm(file, type);
+            img = img_loadpnm(file, type);
             if (img) {
                 img->type = type;
             }else{
@@ -115,7 +115,7 @@ loadimg(const char* file)
 }
 
 ImgType
-imgtype(const char *file)
+img_type(const char *file)
 {
     FILE* f;
     unsigned int i;
@@ -159,7 +159,7 @@ imgtype(const char *file)
 
 /* TODO: Optimize this funciton*/
 ImagePtr
-loadpnm(const char* file, ImgType type)
+img_loadpnm(const char* file, ImgType type)
 {
     ImagePtr img;
     ssize_t imgfile;
@@ -217,7 +217,7 @@ loadpnm(const char* file, ImgType type)
 
     lseek(imgfile, pos, SEEK_SET);
 
-    img = createimg(w, h, channels);
+    img = img_create(w, h, channels);
     if (img == NULL) {
         close(imgfile);
         return NULL;
@@ -232,7 +232,7 @@ loadpnm(const char* file, ImgType type)
             }
             if(addpixel(img, pixel, &curr_pos) < 0) {
                 close(imgfile);
-                freeimg(img);
+                img_free(img);
                 return NULL;
             }
         }
@@ -243,7 +243,7 @@ loadpnm(const char* file, ImgType type)
 }
 
 int8_t
-getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
+img_getpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
     if (x >= img->width || y >= img->height) {
@@ -259,7 +259,7 @@ getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 }
 
 int8_t
-setpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
+img_setpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
 
@@ -277,7 +277,7 @@ setpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 }
 
 uint8_t
-saveimg(ImagePtr img, const char *file)
+img_save(ImagePtr img, const char *file)
 {
     if(img == NULL || file == NULL || strlen(file) < 1)
         return -1;
@@ -287,7 +287,7 @@ saveimg(ImagePtr img, const char *file)
         case IMG_PPM_ASCII:
         case IMG_PGM_ASCII:
         case IMG_PGM_BIN:
-            savepnm(img , file);
+            img_savepnm(img , file);
             break;
         default:
             return -1;
@@ -296,7 +296,7 @@ saveimg(ImagePtr img, const char *file)
 }
 
 uint8_t
-savepnm(ImagePtr img, const char *file)
+img_savepnm(ImagePtr img, const char *file)
 {
     FILE *fp;
     uint32_t x, y;
@@ -329,14 +329,14 @@ savepnm(ImagePtr img, const char *file)
 }
 
 void
-freeimg(ImagePtr img)
+img_free(ImagePtr img)
 {
     free(img->data);
     free(img);
 }
 
 void
-printimg(ImagePtr img)
+img_print(ImagePtr img)
 {
     uint16_t i, j, k;
     uint8_t pixel[] = {0, 0, 0, 0};
@@ -348,7 +348,7 @@ printimg(ImagePtr img)
     for(i = 0; i < img->height; i++) {
         for(j = 0; j < img->width; j++) {
             printf("{ ");
-            getpixel(img, j, i, pixel);
+            img_getpx(img, j, i, pixel);
             for(k = 0; k < img->channels; k++) {
                 printf("%hu ",pixel[k]);
             }
@@ -359,7 +359,7 @@ printimg(ImagePtr img)
 }
 
 int8_t
-dispimg(ImagePtr img, const char* imgviewer)
+img_disp(ImagePtr img, const char* imgviewer)
 {
     char template[] = "/tmp/img_XXXXXX";
     char CMD[0xFF];
@@ -382,7 +382,7 @@ dispimg(ImagePtr img, const char* imgviewer)
         return -1;
     }
 
-    saveimg(img, template);
+    img_save(img, template);
     sprintf(CMD, "%s %s", imgviewer, template);
     printf("Executing command: '%s'\n", CMD);
     system(CMD);
@@ -416,9 +416,9 @@ rgb2gray(ImagePtr img)
 
     for(x = 0; x < newimg->width; ++x) {
         for(y = 0; y < newimg->height; ++y) {
-            getpixel(img, x, y, pixel);
+            img_getpx(img, x, y, pixel);
             newpixel[0] = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
-            setpixel(newimg, x, y, newpixel);
+            img_setpx(newimg, x, y, newpixel);
         }
     }
 

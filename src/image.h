@@ -25,20 +25,21 @@ typedef struct {
 
 typedef image *ImagePtr;
 
-ImagePtr createimg(uint16_t width, uint16_t height, uint8_t channels);
-ImagePtr loadimg(const char* file);
-ImgType imgtype(const char *file);
-ImagePtr loadpnm(const char* file, ImgType type);
-int8_t getpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
-int8_t setpixel(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
-uint8_t savepnm(ImagePtr img, const char *file);
-uint8_t saveimg(ImagePtr img, const char *file);
-void freeimg(ImagePtr img);
-void printimg(ImagePtr img);
-int8_t dispimg(ImagePtr img, const char* custom_viewer);
+ImagePtr img_create(uint16_t width, uint16_t height, uint8_t channels);
+ImagePtr img_load(const char* file);
+ImgType img_type(const char *file);
+ImagePtr img_loadpnm(const char* file, ImgType type);
+int8_t img_getpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
+int8_t img_setpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel);
+uint8_t img_savepnm(ImagePtr img, const char *file);
+uint8_t img_save(ImagePtr img, const char *file);
+ImagePtr img_cpy(ImagePtr src);
+void img_free(ImagePtr img);
+void img_print(ImagePtr img);
+int8_t img_disp(ImagePtr img, const char* custom_viewer);
 
 /*Image Processing Functions*/
-ImagePtr rgb2gray(ImagePtr img);
+ImagePtr img_rgb2gray(ImagePtr img);
 
 
 #endif

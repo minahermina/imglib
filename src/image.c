@@ -394,7 +394,7 @@ img_disp(ImagePtr img, const char* imgviewer)
 }
 
 ImagePtr
-rgb2gray(ImagePtr img)
+img_rgb2gray(ImagePtr img)
 {
     ImagePtr newimg;
     uint16_t x,y;
@@ -417,7 +417,8 @@ rgb2gray(ImagePtr img)
     for(x = 0; x < newimg->width; ++x) {
         for(y = 0; y < newimg->height; ++y) {
             img_getpx(img, x, y, pixel);
-            newpixel[0] = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
+            /* refernce for the formula: https://poynton.ca/PDFs/ColorFAQ.pdf */
+            newpixel[0] = 0.2125 * pixel[0] + 0.7154 * pixel[1] + 0.0721 * pixel[2];
             img_setpx(newimg, x, y, newpixel);
         }
     }

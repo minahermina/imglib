@@ -42,10 +42,9 @@ addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
     uint8_t *p, i;
     uint32_t x, y;
 
-    if (img == NULL || pixel == NULL || current_pos == NULL) {
-        fprintf(stderr, "Error: Invalid input (img, pixel, or position is NULL).\n");
-        return -1;
-    }
+    CHECK_COND(img == NULL || pixel == NULL || current_pos == NULL,
+               "Error: Invalid input (img, pixel, or position is NULL).\n",
+               -1);
 
     if (*current_pos >= (uint32_t)(img->width * img->height)) {
         fprintf(stderr, "Error: Exceeded image capacity.\n");
@@ -302,14 +301,10 @@ img_savepnm(ImagePtr img, const char *file)
     uint32_t x, y;
     uint8_t *row, *pixel;
 
-    if (img == NULL) {
-        fprintf(stderr, "img is NULL!");
-        return -1;
-    }
+    CHECK_PTR(img, -1);
 
     fp = fopen(file, "wb");
-    if (!fp)
-        return -1;
+    CHECK_PTR(fp, -1);
 
     // Write header
     fprintf(fp, "%s\n%d %d\n255\n", HEX_TO_ASCII(img->type), img->width, img->height);
@@ -320,7 +315,7 @@ img_savepnm(ImagePtr img, const char *file)
             pixel = &row[x * img->channels];
             if (fwrite(pixel, 1, img->channels, fp) != img->channels) {
                 fclose(fp);
-                return 0;
+                return -1;
             }
         }
     }

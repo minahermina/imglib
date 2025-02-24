@@ -12,6 +12,7 @@
 
 #define MAXLINE 1024
 #define CHUNK_SIZE 8193
+#define CHUNK_SIZE 8192
 
 #define IMG_PIXEL_PTR(img, x, y) ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
 
@@ -163,9 +164,9 @@ img_loadpnm(const char* file, ImgType type)
     ImagePtr img;
     ssize_t imgfile;
     FILE* tmp_file;
-    uint8_t pixel[3], channels, ch;
+    uint8_t pixel[3], channels, ch, leftover[2] = {0}, leftover_size = 0;
     uint16_t w, h;
-    uint32_t i, curr_pos, bytesread;
+    uint32_t i, curr_pos = 0, bytesread = 0;
     char line[MAXLINE], chunk[CHUNK_SIZE];
 
     tmp_file = fopen(file, "rb");
@@ -222,21 +223,30 @@ img_loadpnm(const char* file, ImgType type)
         return NULL;
     }
 
-    bytesread = 0, curr_pos = 0;
 
-    while((bytesread = read(imgfile, chunk, sizeof(chunk))) > 0){
-        for(i = 0; i < bytesread; i += channels) {
-            for(ch = 0; ch < channels; ch++) {
+    while ((bytesread = read(imgfile, chunk, sizeof(chunk))) > 0) {
+        int total_bytes = bytesread + leftover_size;
+        int valid_bytes = (total_bytes / channels) * channels;
+
+        // Copy leftover from the previous iteration
+        memmove(chunk + leftover_size, chunk, bytesread);
+        memcpy(chunk, leftover, leftover_size);
+
+        for (i = 0; i < valid_bytes; i += channels) {
+            for (ch = 0; ch < channels; ch++) {
                 pixel[ch] = chunk[i + ch];
             }
-            if(addpixel(img, pixel, &curr_pos) < 0) {
+            if (addpixel(img, pixel, &curr_pos) < 0) {
                 close(imgfile);
                 img_free(img);
                 return NULL;
             }
         }
-    }
 
+        // Store leftover bytes
+        leftover_size = total_bytes % channels;
+        memcpy(leftover, chunk + valid_bytes, leftover_size);
+    }
     close(imgfile);
     return img;
 }

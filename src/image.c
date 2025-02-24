@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <unistd.h>
-#include <stdbool.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <string.h>
@@ -11,7 +10,6 @@
 #include "image.h"
 
 #define MAXLINE 1024
-#define CHUNK_SIZE 8193
 #define CHUNK_SIZE 8192
 
 #define IMG_PIXEL_PTR(img, x, y) ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
@@ -382,10 +380,8 @@ img_print(ImagePtr img)
 int8_t
 img_disp(ImagePtr img, const char* imgviewer)
 {
-    char template[] = "/tmp/img_XXXXXX";
-    char CMD[0xFF];
     int fd;
-
+    char template[] = "/tmp/img_XXXXXX", CMD[0xFF];
 
     printf("Using viewer command: '%s'\n", imgviewer);
 

@@ -285,6 +285,22 @@ img_setpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
     return 1;
 }
 
+ImagePtr
+img_cpy(ImagePtr src)
+{
+    ImagePtr img = NULL;
+
+    CHECK_COND(src == NULL, "", NULL);
+
+    img = img_create(src->width, src->height, src->channels);
+    CHECK_ALLOC(img);
+    img->type = src->type;
+
+    memcpy(img->data, src->data, src->height * src->stride);
+
+    return img;
+}
+
 uint8_t
 img_save(ImagePtr img, const char *file)
 {

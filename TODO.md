@@ -13,12 +13,12 @@
 ## Spatial Filters
 
 - [ ] **Gaussian Filter**: Implement Gaussian blur with a specified standard deviation.
-- [ ] **Support for Border Padding Methods**: Implement zero paddding and border replicate techniques
+- [] **Support for Border Padding Methods**: Implement zero paddding and border replicate techniques
 
 ## Geometric Transformations
 
 - [ ] **Image Rotation**
-- [ ] **Image Resizing**
+- [x] **Image Resizing**
 
 ## Color Space Conversions
 

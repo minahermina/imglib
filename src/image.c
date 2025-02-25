@@ -11,11 +11,14 @@
 
 #define MAXLINE 1024
 #define CHUNK_SIZE 8192
-
-#define IMG_PIXEL_PTR(img, x, y) ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
-
+#define MAX(A, B)                       ((A) > (B) ? (A) : (B))
+#define MIN(A, B)                       ((A) < (B) ? (A) : (B))
+#define FLOOR(x) ((int)(x) - ((x) < 0 && (x) != (int)(x)))
+#define ABS(x) ((x) < 0 ? -(x) : (x))
+#define P(x)                            (x <= 0 ? 0 : x)
+#define IMG_PIXEL_PTR(img, x, y)        ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
 /*TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
-#define HEX_TO_ASCII(hex) (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
+#define HEX_TO_ASCII(hex)               (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
 
 #define CHECK_ALLOC(ptr) \
     CHECK_COND(ptr == NULL, "Memmory Allocation failed", NULL)\

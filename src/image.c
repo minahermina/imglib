@@ -38,6 +38,7 @@ calc_stride(uint16_t width, uint8_t channels)
     return (((uint32_t) width * (uint32_t)channels + 15) & ~(uint32_t)15);
 }
 
+/* TODO: Replace current_pos logic with x, y to use img_getpx & img_setpx*/
 static int8_t
 addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
 {

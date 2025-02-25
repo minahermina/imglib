@@ -446,3 +446,70 @@ img_rgb2gray(ImagePtr img)
     return newimg;
 }
 
+/* TODO: Find an efficient implementation for this cubic kernel */
+static float
+cubic_kernel(float x)
+{
+     // return (float)((P(x+2) * P(x+2) * P(x+2)) - 4 *(P(x+1) * P(x+1) * P(x+1)) + 6 * (P(x) * P(x) * P(x)) - 4 * (P(x - 1) * P(x - 1) * P(x - 1)))/6;
+    x = ABS(x);
+    if (x <= 1.0f)
+        return (1.5f * x - 2.5f) * x * x + 1.0f;
+    else if (x < 2.0f)
+        return ((-0.5f * x + 2.5f) * x - 4.0f) * x + 2.0f;
+    return 0.0f;
+}
+
+/*
+    resize Using Bicubic Interpolation
+    Reference: https://iopscience.iop.org/article/10.1088/1742-6596/1114/1/012066
+*/
+/* TODO: Optimize redundant calculations and memory access */
+ImagePtr
+img_resize(ImagePtr src, uint16_t new_width, uint16_t new_height)
+{
+    ImagePtr img;
+    float scale_x, scale_y, src_x, src_y, value;
+    int ix, iy, c, n, m;
+    uint16_t  x, y;
+    uint8_t pixel[3] = {0}, spixel[3];
+    CHECK_PTR(src , NULL);
+
+    img = img_create(new_width, new_height, src->channels);
+    img->type = src->type;
+    CHECK_PTR(img, NULL);
+
+    scale_x = (float)src->width / new_width;
+    scale_y = (float)src->height / new_height;
+
+    for (y = 0; y < new_height; y++) {
+        for (x = 0; x < new_width; x++) {
+            src_x = (x + 0.5f) * scale_x - 0.5f;
+            src_y = (y + 0.5f) * scale_y - 0.5f;
+            ix = (int)FLOOR(src_x);
+            iy = (int)FLOOR(src_y);
+
+            for (c = 0; c < src->channels; c++) {
+                value = 0.0f;
+                for (m = -1; m <= 2; m++) {
+                    for (n = -1; n <= 2; n++) {
+                        int sx = ix + n;
+                        int sy = iy + m;
+                        if (sx < 0) sx = 0;
+                        if (sy < 0) sy = 0;
+                        sx = (sx >= src->width ? src->width - 1 : sx);
+                        sy = (sy >= src->height ? src->height - 1 : sy);
+
+                        img_getpx(src, sx, sy, spixel);
+                        // value += spixel[c] * cubic_kernel(m - (src_x - ix)) * cubic_kernel(n - (src_y - iy));
+                        value += spixel[c] * cubic_kernel(n - (src_x - ix)) * cubic_kernel(m - (src_y - iy));
+                    }
+                }
+                pixel[c] = MIN(MAX(value, 0), 255);
+            }
+            img_setpx(img, x, y, pixel);
+        }
+    }
+    return img;
+}
+
+

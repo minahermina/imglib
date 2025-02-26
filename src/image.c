@@ -8,6 +8,7 @@
 
 #include "image.h"
 
+/* Macros */
 #define MAXLINE 1024
 #define CHUNK_SIZE 8192
 #define MAX(A, B)                       ((A) > (B) ? (A) : (B))
@@ -19,6 +20,7 @@
 /*TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
 #define HEX_TO_ASCII(hex)               (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
 
+/* TODO: Replace error-handling macros with a more robust error-handling mechanism */
 #define CHECK_ALLOC(ptr) \
     CHECK_COND(ptr == NULL, "Memmory Allocation failed", NULL)\
 
@@ -70,6 +72,17 @@ ImagePtr
 img_create(uint16_t width, uint16_t height, uint8_t channels)
 {
     ImagePtr img;
+
+    /*TODO: Extend channel support beyond the current 1-4 limit to accommodate additional color spaces:
+     * - LAB (3 channels)
+     * - CMYK (4 channels)
+     * - CMYKA (5 channels)
+     * - etc.
+     */
+    CHECK_COND(width == 0 || height == 0 || channels < 1 || channels > 4,
+           "Invalid image dimensions or channels (width/height must be > 0, channels must be 1-4)",
+           NULL);
+
     img = (ImagePtr) malloc( sizeof(image));
     CHECK_ALLOC(img)
 
@@ -90,11 +103,12 @@ img_create(uint16_t width, uint16_t height, uint8_t channels)
 ImagePtr
 img_load(const char* file)
 {
+    ImagePtr img = NULL;
+    ImgType type;
+
     CHECK_COND(file == NULL , "" ,NULL );
 
-    ImagePtr img = NULL;
-    ImgType type = img_type(file);
-
+    type = img_type(file);
     switch(type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
         case IMG_PPM_ASCII:
@@ -316,6 +330,7 @@ img_save(ImagePtr img, const char *file)
             img_savepnm(img , file);
             break;
         default:
+            fprintf(stderr, "Error: Unknown ImageType!\n(function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__); \
             return -1;
     }
     return 1;
@@ -353,6 +368,11 @@ img_savepnm(ImagePtr img, const char *file)
 void
 img_free(ImagePtr img)
 {
+    if(img == NULL) {
+        fprintf(stderr, "img is NULL!");
+        return;
+    }
+
     free(img->data);
     free(img);
 }

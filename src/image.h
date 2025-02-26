@@ -41,6 +41,7 @@ int8_t img_disp(ImagePtr img, const char* custom_viewer);
 /*Image Processing Functions*/
 ImagePtr img_rgb2gray(ImagePtr img);
 ImagePtr img_resize(ImagePtr src, uint16_t new_width, uint16_t new_height);
+ImagePtr img_add(ImagePtr img1, ImagePtr img2);
 
 
 #endif

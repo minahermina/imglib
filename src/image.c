@@ -533,3 +533,40 @@ img_resize(ImagePtr src, uint16_t new_width, uint16_t new_height)
 }
 
 
+ImagePtr
+img_add(ImagePtr img1, ImagePtr img2)
+{
+    ImagePtr img = NULL;
+    uint16_t x, y, width, height, sum;
+    uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
+
+
+    CHECK_COND(img1 == NULL || img2 == NULL, "", NULL);
+    CHECK_COND(img1->width != img2->width        ||
+               img1->height != img2->height      ||
+               img1->channels != img2->channels ||
+               img1->type != img2->type,
+               "",
+               NULL);
+
+    width = img1->width;
+    height = img1->height;
+    channels = img1->channels;
+
+    img = img_create(width, height, channels);
+    img->type = img1->type;
+    CHECK_ALLOC(img);
+
+    for(y = 0; y < height; ++y){
+        for(x = 0; x < width; ++x){
+            img_getpx(img1, x, y, pixel1);
+            img_getpx(img2, x, y, pixel2);
+            for(ch = 0; ch < channels; ++ch){
+                sum = (uint16_t) pixel1[ch] + (uint16_t) pixel2[ch];
+                pixel1[ch] = MIN(255, (uint8_t)sum);
+            }
+            img_setpx(img, x, y, pixel1);
+        }
+    }
+    return img;
+}

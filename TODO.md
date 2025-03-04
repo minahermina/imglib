@@ -13,7 +13,7 @@
 ## Spatial Filters
 
 - [ ] **Gaussian Filter**: Implement Gaussian blur with a specified standard deviation.
-- [] **Support for Border Padding Methods**: Implement zero paddding and border replicate techniques
+- [ ] **Support for Border Padding Methods**: Implement zero paddding and border replicate techniques
 
 ## Geometric Transformations
 
@@ -27,11 +27,11 @@
 
 ## Image Arithmetic
 
-- [ ] **Image Addition**
+- [x] **Image Addition**
 - [ ] **Image Subtraction**
 
 ## General Enhancements
 
-- [ ] **Add Changelog**:
+- [x] **Add Changelog**:
 - [ ] **Add Documentation**: Write comprehensive documentation to explain the library's API and usage.
 - [ ] **Unit Testing Suite**: Establish a robust set of tests to ensure code reliability and facilitate future development.

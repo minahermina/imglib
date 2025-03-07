@@ -11,12 +11,15 @@
 /* Macros */
 #define MAXLINE 1024
 #define CHUNK_SIZE 8192
-#define MAX(A, B)                       ((A) > (B) ? (A) : (B))
-#define MIN(A, B)                       ((A) < (B) ? (A) : (B))
-#define FLOOR(x) ((int)(x) - ((x) < 0 && (x) != (int)(x)))
-#define ABS(x) ((x) < 0 ? -(x) : (x))
-#define P(x)                            (x <= 0 ? 0 : x)
-#define IMG_PIXEL_PTR(img, x, y)        ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
+#define MAX(A, B)                 ((A) > (B) ? (A) : (B))
+#define MIN(A, B)                 ((A) < (B) ? (A) : (B))
+#define FLOOR(x)                  ((int)(x) - ((x) < 0 && (x) != (int)(x)))
+#define ABS(x)                    ((x) < 0 ? -(x) : (x))
+#define P(x)                      (x <= 0 ? 0 : x)
+#define IMG_PIXEL_PTR(img, x, y)  ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
+#define IMG_ARR_SIZE(x)           (sizeof(x) / sizeof((x)[0]))
+#define VAR(var) fprintf(stderr, "[DEBUG] %s = %d\n", #var, (var))
+
 /*TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
 #define HEX_TO_ASCII(hex)               (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
 
@@ -34,7 +37,7 @@
     }
 
 static inline uint32_t
-calc_stride(uint16_t width, uint8_t channels) 
+calc_stride(uint16_t width, uint8_t channels)
 {
     return (((uint32_t) width * (uint32_t)channels + 15) & ~(uint32_t)15);
 }
@@ -83,7 +86,7 @@ img_create(uint16_t width, uint16_t height, uint8_t channels)
            "Invalid image dimensions or channels (width/height must be > 0, channels must be 1-4)",
            NULL);
 
-    img = (ImagePtr) malloc( sizeof(image));
+    img = (ImagePtr) malloc(sizeof(Image));
     CHECK_ALLOC(img)
 
     img->stride = calc_stride(width, channels);
@@ -442,7 +445,7 @@ img_rgb2gray(ImagePtr img)
 
     CHECK_PTR(img, NULL);
 
-    newimg = (ImagePtr) malloc(sizeof(image));
+    newimg = (ImagePtr) malloc(sizeof(Image));
     CHECK_ALLOC(newimg);
 
     newimg->width = img->width;

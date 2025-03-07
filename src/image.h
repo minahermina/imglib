@@ -2,12 +2,13 @@
 #define IMAGE_LIB
 #include <stdint.h>
 
+
 typedef enum {
     IMG_UNKNOWN = -1,
-    IMG_PPM_BIN = 0x5036,    // P6
-    IMG_PPM_ASCII = 0x5033,  // P3
-    IMG_PGM_BIN = 0x5035,    // P5
-    IMG_PGM_ASCII = 0x5032,  // P2
+    IMG_PPM_BIN = 0x5036,   // P6
+    IMG_PPM_ASCII = 0x5033, // P3
+    IMG_PGM_BIN = 0x5035,   // P5
+    IMG_PGM_ASCII = 0x5032, // P2
 } ImgType;
 
 typedef enum {
@@ -28,17 +29,19 @@ typedef struct {
     uint16_t height;
     uint8_t  channels;
     ImgType type;
-} image;
+} Image;
+
 typedef struct {
     int size;
     float *data;
 } Kernel;
 
-typedef image *ImagePtr;
 typedef enum {
     IMG_BORDER_ZERO_PADDING,
     IMG_BORDER_REPLICATE
 } BorderMode;
+
+typedef Image *ImagePtr;
 
 ImagePtr img_create(uint16_t width, uint16_t height, uint8_t channels);
 ImagePtr img_load(const char* file);
@@ -58,6 +61,5 @@ void img_convolve(ImagePtr img, Kernel kernel, BorderMode border_mode);
 ImagePtr img_rgb2gray(ImagePtr img);
 ImagePtr img_resize(ImagePtr src, uint16_t new_width, uint16_t new_height);
 ImagePtr img_add(ImagePtr img1, ImagePtr img2);
-
 
 #endif

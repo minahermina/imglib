@@ -570,3 +570,77 @@ img_add(ImagePtr img1, ImagePtr img2)
     }
     return img;
 }
+
+/* TODO: This is probably the worst implementation ever.
+   Many things can be handled more efficiently.
+*/
+void img_convolve(ImagePtr img, Kernel kernel, BorderMode border_mode)
+{
+    uint8_t channels, *p;
+    uint16_t x, y, half_kernel;
+    int16_t kx, ky, px , py;
+    double sum_r, sum_g, sum_b;
+    float kernel_val;
+    uint32_t offset;
+
+    CHECK_COND(!img || !img->data || kernel.data == NULL|| kernel.size % 2 == 0,
+               "Invalid input parameters for convolution.\n", );
+
+    half_kernel = kernel.size /2;
+    channels = img->channels;
+    // Create a copy of the original image data for reference
+    uint8_t *orig_data = (uint8_t *)malloc(img->height * img->stride);
+    CHECK_PTR(orig_data,);
+    memcpy(orig_data, img->data, img->height * img->stride);
+
+    for (y = 0; y < img->height; y++) {
+        for (x = 0; x < img->width; x++) {
+            sum_r = 0.0, sum_g = 0.0, sum_b = 0.0;
+
+            for (ky = -half_kernel; ky <= half_kernel; ky++) {
+                for (kx = -half_kernel; kx <= half_kernel; kx++) {
+                    px = x + kx;
+                    py = y + ky;
+
+                    if (px < 0 || px >= img->width || py < 0 || py >= img->height) {
+                        switch(border_mode) {
+                            case IMG_BORDER_ZERO_PADDING:
+                                continue;
+                            case IMG_BORDER_REPLICATE:
+                                px = MIN(MAX(px, 0), img->width - 1);
+                                py = MIN(MAX(py, 0), img->height - 1);
+                        }
+                    }
+
+                    // Get kernel value
+                    kernel_val = kernel.data[(ky + half_kernel) * kernel.size + (kx + half_kernel)];
+
+                    // Get pixel from the original image copy
+                    uint32_t offset = py * img->stride + px * channels;
+                    sum_r += orig_data[offset] * kernel_val;
+                    if(channels == 3){
+                        sum_g += orig_data[offset + 1] * kernel_val;
+                        sum_b += orig_data[offset + 2] * kernel_val;
+                    }
+                }
+            }
+
+            sum_r = MIN(MAX(sum_r, 0.0), 255.0);
+            if(channels == 3){
+                sum_g = MIN(MAX(sum_g, 0.0), 255.0);
+                sum_b = MIN(MAX(sum_b, 0.0), 255.0);
+            }
+
+            // Write output directly to the image
+            p = IMG_PIXEL_PTR(img, x, y);
+            p[0] = (uint8_t)sum_r;
+            if(channels == 3){
+                p[1] = (uint8_t)sum_g;
+                p[2] = (uint8_t)sum_b;
+            }
+        }
+    }
+
+    // Free the reference copy
+    free(orig_data);
+}

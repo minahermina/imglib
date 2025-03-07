@@ -10,6 +10,13 @@ typedef enum {
     IMG_PGM_ASCII = 0x5032,  // P2
 } ImgType;
 
+typedef enum {
+    IMG_KERNEL_3x3 = 3,
+    IMG_KERNEL_5x5 = 5,
+    IMG_KERNEL_7x7 = 7,
+    IMG_KERNEL_11x11 = 7,
+} ImgKernelSize;
+
 typedef struct {
     uint8_t *data;
     /* 
@@ -22,8 +29,16 @@ typedef struct {
     uint8_t  channels;
     ImgType type;
 } image;
+typedef struct {
+    int size;
+    float *data;
+} Kernel;
 
 typedef image *ImagePtr;
+typedef enum {
+    IMG_BORDER_ZERO_PADDING,
+    IMG_BORDER_REPLICATE
+} BorderMode;
 
 ImagePtr img_create(uint16_t width, uint16_t height, uint8_t channels);
 ImagePtr img_load(const char* file);
@@ -39,6 +54,7 @@ void img_print(ImagePtr img);
 int8_t img_disp(ImagePtr img, const char* custom_viewer);
 
 /*Image Processing Functions*/
+void img_convolve(ImagePtr img, Kernel kernel, BorderMode border_mode);
 ImagePtr img_rgb2gray(ImagePtr img);
 ImagePtr img_resize(ImagePtr src, uint16_t new_width, uint16_t new_height);
 ImagePtr img_add(ImagePtr img1, ImagePtr img2);

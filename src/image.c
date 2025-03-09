@@ -137,30 +137,25 @@ img_type(const char *file)
 {
     FILE* f;
     unsigned int i;
-    char magic[MAXLINE];
-    uint64_t magic_;
+    char magic[3] = {0};
     char line[MAXLINE];
 
-    /* Read the PNM/PFM file header. */
     f = fopen(file, "rb");
-
     CHECK_PTR(f, IMG_UNKNOWN);
+
     while (fgets(line, MAXLINE, f) != NULL) {
-        int flag = 0;
-        for (i = 0; i < strlen(line); i++) {
-            if (isgraph(line[i])) {
-                if ((line[i] == '#') && (flag == 0)) {
-                    flag = 1;
-                }
-            }
+        if (line[0] == '#') {
+            continue;  // Skip comment lines
         }
-        if (flag == 0) {
-            sscanf(line, "%2s", magic);
+
+        if (sscanf(line, "%2s", magic) == 1) {
             break;
         }
     }
 
-    magic_ = (magic[0] << 8) | magic[1];
+    uint16_t magic_ = (magic[0] << 8) | magic[1];
+
+    fclose(f);
 
     switch(magic_) {
         case IMG_PPM_BIN:
@@ -171,9 +166,12 @@ img_type(const char *file)
             return IMG_PGM_BIN;
         case IMG_PGM_ASCII:
             return IMG_PGM_ASCII;
-        default: return IMG_UNKNOWN;
+        default:
+            return IMG_UNKNOWN;
     }
 }
+
+
 
 /* TODO: Optimize this funciton*/
 ImagePtr

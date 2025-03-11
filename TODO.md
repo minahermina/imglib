@@ -2,7 +2,8 @@
 
 ## Custom Convolution Function
 
-- [ ] **Convolution Function**: Implement a custom 2D convolution function that accepts user-defined filters for image processing.
+- [x] **Convolution Function**: Implement a custom 2D convolution function that accepts user-defined filters for image processing.
+- [x] **Support for Border Padding Methods**: Implement zero paddding and border replicate techniques
 
 ## Order Statistics Filters
 
@@ -13,7 +14,6 @@
 ## Spatial Filters
 
 - [ ] **Gaussian Filter**: Implement Gaussian blur with a specified standard deviation.
-- [ ] **Support for Border Padding Methods**: Implement zero paddding and border replicate techniques
 
 ## Geometric Transformations
 

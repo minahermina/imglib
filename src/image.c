@@ -290,6 +290,8 @@ int8_t
 img_getpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
+    CHECK_PTR(pixel, -1);
+
     if (x >= img->width || y >= img->height) {
         return -1;
     }
@@ -306,6 +308,7 @@ int8_t
 img_setpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
+    CHECK_PTR(pixel, -1);
 
     if (x >= img->width || y >= img->height) {
         return -1;
@@ -314,7 +317,7 @@ img_setpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
     p = IMG_PIXEL_PTR(img, x, y);
 
     for(i = 0; i < img->channels; i++) {
-        p[i] = pixel[i];
+        p[i] = MIN(255, pixel[i]);
     }
 
     return 1;

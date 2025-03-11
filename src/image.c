@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <ctype.h>
 #include <fcntl.h>
 #include <string.h>
 
@@ -155,7 +154,6 @@ ImgType
 img_type(const char *file)
 {
     FILE* f;
-    unsigned int i;
     char magic[3] = {0};
     char line[MAXLINE];
 
@@ -422,6 +420,19 @@ img_print(ImagePtr img)
         printf("\n");
     }
 }
+/*
+    TODO: Extend this function to support displaying images independently of the format.
+
+    Currently, this implementation saves the image in PPM format and relies on an
+    external image viewer to display it. To improve flexibility, consider:
+
+    - Supporting multiple image formats instead of relying solely on a single format.
+    - Using an image processing library (e.g., stb_image, ImageMagick) to handle 
+      different formats.
+    - Directly rendering images in a GUI window instead of invoking an external viewer.
+
+*/
+
 
 int8_t
 img_disp(ImagePtr img, const char* imgviewer)
@@ -543,7 +554,6 @@ img_resize(ImagePtr src, uint16_t new_width, uint16_t new_height)
                         sy = (sy >= src->height ? src->height - 1 : sy);
 
                         img_getpx(src, sx, sy, spixel);
-                        // value += spixel[c] * cubic_kernel(m - (src_x - ix)) * cubic_kernel(n - (src_y - iy));
                         value += spixel[c] * cubic_kernel(n - (src_x - ix)) * cubic_kernel(m - (src_y - iy));
                     }
                 }
@@ -586,7 +596,7 @@ img_add(ImagePtr img1, ImagePtr img2)
             img_getpx(img2, x, y, pixel2);
             for(ch = 0; ch < channels; ++ch){
                 sum = (uint16_t) pixel1[ch] + (uint16_t) pixel2[ch];
-                pixel1[ch] = MIN(255, (uint8_t)sum);
+                pixel1[ch] = (uint8_t)(MIN(255, sum));
             }
             img_setpx(img, x, y, pixel1);
         }

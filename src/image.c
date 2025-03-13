@@ -481,6 +481,19 @@ Kernel kernel_alloc(KernelSize sz){
 Kernel
 img_get_kernel(KernelType type, KernelSize size)
 {
+    const float sobel_x[] = {
+        -1.0f, 0.0f, 1.0f,
+        -2.0f, 0.0f, 2.0f,
+        -1.0f, 0.0f, 1.0f
+    },
+    sobel_y[] = {
+        -1.0f, -2.0f, -1.0f,
+        0.0f,  0.0f,  0.0f,
+        1.0f,  2.0f,  1.0f
+    };
+
+
+
     Kernel kernel = {0};
     float size_squared = size * size;
     size_t i, center = (size_t)size_squared/2;
@@ -517,21 +530,11 @@ img_get_kernel(KernelType type, KernelSize size)
 
         case KERNEL_SOBEL_X:
 
-            float sobel_x[] = {
-                -1.0f, 0.0f, 1.0f,
-                -2.0f, 0.0f, 2.0f,
-                -1.0f, 0.0f, 1.0f
-            };
             memcpy(kernel.data, sobel_x, size_squared * sizeof(float));
             break;
 
         case KERNEL_SOBEL_Y:
 
-            float sobel_y[] = {
-                -1.0f, -2.0f, -1.0f,
-                0.0f,  0.0f,  0.0f,
-                1.0f,  2.0f,  1.0f
-            };
             memcpy(kernel.data, sobel_y, size_squared * sizeof(float));
             break;
 

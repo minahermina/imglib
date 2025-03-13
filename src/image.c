@@ -469,6 +469,211 @@ img_disp(ImagePtr img, const char* imgviewer)
     return 0;
 }
 
+Kernel kernel_alloc(KernelSize sz){
+    Kernel kernel = {0};
+    kernel.size = sz;
+    kernel.data = (float*) malloc(kernel.size * kernel.size * sizeof(float));
+    KERNEL_ASSERT(kernel);
+    return kernel;
+}
+
+Kernel
+img_get_kernel(KernelType type, KernelSize size)
+{
+    Kernel kernel = {0};
+    float size_squared = size * size;
+    size_t i, center = (size_t)size_squared/2;
+
+    kernel = kernel_alloc(size);
+    switch(type) {
+        case KERNEL_IDENTITY:
+
+            memset(kernel.data, 0, size_squared * sizeof(float));
+            kernel.data[center] = 1.0f;
+            break;
+
+        case KERNEL_BOX_BLUR:
+
+            for (i = 0; i < (size_squared); i++) {
+                kernel.data[i] = 1.0f / size_squared ;
+            }
+            break;
+
+
+        case KERNEL_SHARPEN:
+            assert(size != IMG_KERNEL_3x3);
+
+            /*TODO: implement a generalized funciton that creates a sharpen kernel of custom size n */
+            float sharpen[] = {
+                0.0f, -1.0f, 0.0f,
+                -1.0f, 5.0f, -1.0f,
+                0.0f, -1.0f, 0.0f
+            };
+
+            /*May be replaced by fill_kernel util ?, i don't know*/
+            memcpy(kernel.data, sharpen, size_squared * sizeof(float));
+            break;
+
+        case KERNEL_SOBEL_X:
+
+            float sobel_x[] = {
+                -1.0f, 0.0f, 1.0f,
+                -2.0f, 0.0f, 2.0f,
+                -1.0f, 0.0f, 1.0f
+            };
+            memcpy(kernel.data, sobel_x, size_squared * sizeof(float));
+            break;
+
+        case KERNEL_SOBEL_Y:
+
+            float sobel_y[] = {
+                -1.0f, -2.0f, -1.0f,
+                0.0f,  0.0f,  0.0f,
+                1.0f,  2.0f,  1.0f
+            };
+            memcpy(kernel.data, sobel_y, size_squared * sizeof(float));
+            break;
+
+        case KERNEL_LAPLACIAN:
+            /*TODO: implement a funciton that creates a laplacian kernel of custom size n */
+            assert(size != IMG_KERNEL_3x3);
+
+            float laplacian[] = {
+                0.0f,  1.0f, 0.0f,
+                1.0f, -4.0f, 1.0f,
+                0.0f,  1.0f, 0.0f
+            };
+            memcpy(kernel.data, laplacian, size_squared * sizeof(float));
+            break;
+
+        case KERNEL_GAUSSIAN_BLUR:
+            /*TODO: implement the gaussian formula */
+        default:
+            fprintf(stderr, "Unknown kernel type\n");
+            kernel.size = 0;
+            kernel.data = NULL;
+    }
+
+    return kernel;
+}
+
+int8_t
+img_apply_filter(ImagePtr img, KernelType type, KernelSize size, BorderMode border_mode)
+{
+    CHECK_PTR(img, -1);
+
+    Kernel kernel = img_get_kernel(type, size);
+    if (kernel.data == NULL || kernel.size == 0) {
+        fprintf(stderr, "Failed to create kernel\n");
+        return -1;
+    }
+
+    img_convolve(img, kernel, border_mode);
+
+    img_free_kernel(kernel);
+
+    return 1;
+}
+
+void
+img_print_kernel(Kernel kernel)
+{
+    KERNEL_ASSERT(kernel);
+
+    for (int i = 0; i < kernel.size; i++) {
+        for (int j = 0; j < kernel.size; j++) {
+            printf("%6.2f ", kernel.data[i * kernel.size + j]);
+        }
+        printf("\n");
+    }
+}
+
+
+
+void
+img_free_kernel(Kernel kernel)
+{
+    if (kernel.data) {
+        free(kernel.data);
+        kernel.data = NULL;
+        kernel.size = 0;
+    }
+}
+
+/* TODO: This is probably the worst implementation ever.
+   Many things can be handled more efficiently.
+*/
+void img_convolve(ImagePtr img, Kernel kernel, BorderMode border_mode)
+{
+    uint8_t channels, *p;
+    uint16_t x, y, half_kernel;
+    int16_t kx, ky, px , py;
+    double sum_r, sum_g, sum_b;
+    float kernel_val;
+    uint32_t offset;
+
+    CHECK_COND(!img || !img->data || kernel.data == NULL|| kernel.size % 2 == 0,
+               "Invalid input parameters for convolution.\n", );
+
+    half_kernel = kernel.size /2;
+    channels = img->channels;
+    // Create a copy of the original image data for reference
+    uint8_t *orig_data = (uint8_t *)malloc(img->height * img->stride);
+    CHECK_PTR(orig_data,);
+    memcpy(orig_data, img->data, img->height * img->stride);
+
+    for (y = 0; y < img->height; y++) {
+        for (x = 0; x < img->width; x++) {
+            sum_r = 0.0, sum_g = 0.0, sum_b = 0.0;
+
+            for (ky = -half_kernel; ky <= half_kernel; ky++) {
+                for (kx = -half_kernel; kx <= half_kernel; kx++) {
+                    px = x + kx;
+                    py = y + ky;
+
+                    if (px < 0 || px >= img->width || py < 0 || py >= img->height) {
+                        switch(border_mode) {
+                            case IMG_BORDER_ZERO_PADDING:
+                                continue;
+                            case IMG_BORDER_REPLICATE:
+                                px = MIN(MAX(px, 0), img->width - 1);
+                                py = MIN(MAX(py, 0), img->height - 1);
+                        }
+                    }
+
+                    // Get kernel value
+                    kernel_val = kernel.data[(ky + half_kernel) * kernel.size + (kx + half_kernel)];
+
+                    // Get pixel from the original image copy
+                    offset = py * img->stride + px * channels;
+                    sum_r += orig_data[offset] * kernel_val;
+                    if(channels == 3){
+                        sum_g += orig_data[offset + 1] * kernel_val;
+                        sum_b += orig_data[offset + 2] * kernel_val;
+                    }
+                }
+            }
+
+            sum_r = MIN(MAX(sum_r, 0.0), 255.0);
+            if(channels == 3){
+                sum_g = MIN(MAX(sum_g, 0.0), 255.0);
+                sum_b = MIN(MAX(sum_b, 0.0), 255.0);
+            }
+
+            // Write output directly to the image
+            p = IMG_PIXEL_PTR(img, x, y);
+            p[0] = (uint8_t)sum_r;
+            if(channels == 3){
+                p[1] = (uint8_t)sum_g;
+                p[2] = (uint8_t)sum_b;
+            }
+        }
+    }
+
+    // Free the reference copy
+    free(orig_data);
+}
+
 ImagePtr
 img_rgb2gray(ImagePtr img)
 {
@@ -606,76 +811,44 @@ img_add(ImagePtr img1, ImagePtr img2)
     return img;
 }
 
-/* TODO: This is probably the worst implementation ever.
-   Many things can be handled more efficiently.
-*/
-void img_convolve(ImagePtr img, Kernel kernel, BorderMode border_mode)
+
+ImagePtr
+img_subtract(ImagePtr img1, ImagePtr img2)
 {
-    uint8_t channels, *p;
-    uint16_t x, y, half_kernel;
-    int16_t kx, ky, px , py;
-    double sum_r, sum_g, sum_b;
-    float kernel_val;
-    uint32_t offset;
+    ImagePtr img = NULL;
+    uint16_t x, y, width, height, diff;
+    uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0}, pixel3[] = {0,0,0,0};
 
-    CHECK_COND(!img || !img->data || kernel.data == NULL|| kernel.size % 2 == 0,
-               "Invalid input parameters for convolution.\n", );
 
-    half_kernel = kernel.size /2;
-    channels = img->channels;
-    // Create a copy of the original image data for reference
-    uint8_t *orig_data = (uint8_t *)malloc(img->height * img->stride);
-    CHECK_PTR(orig_data,);
-    memcpy(orig_data, img->data, img->height * img->stride);
+    CHECK_COND(img1 == NULL || img2 == NULL, "", NULL);
+    CHECK_COND(img1->width != img2->width        ||
+               img1->height != img2->height      ||
+               img1->channels != img2->channels ||
+               img1->type != img2->type,
+               "",
+               NULL);
 
-    for (y = 0; y < img->height; y++) {
-        for (x = 0; x < img->width; x++) {
-            sum_r = 0.0, sum_g = 0.0, sum_b = 0.0;
+    width = img1->width;
+    height = img1->height;
+    channels = img1->channels;
 
-            for (ky = -half_kernel; ky <= half_kernel; ky++) {
-                for (kx = -half_kernel; kx <= half_kernel; kx++) {
-                    px = x + kx;
-                    py = y + ky;
+    img = img_create(width, height, channels);
+    img->type = img1->type;
+    CHECK_ALLOC(img);
 
-                    if (px < 0 || px >= img->width || py < 0 || py >= img->height) {
-                        switch(border_mode) {
-                            case IMG_BORDER_ZERO_PADDING:
-                                continue;
-                            case IMG_BORDER_REPLICATE:
-                                px = MIN(MAX(px, 0), img->width - 1);
-                                py = MIN(MAX(py, 0), img->height - 1);
-                        }
-                    }
-
-                    // Get kernel value
-                    kernel_val = kernel.data[(ky + half_kernel) * kernel.size + (kx + half_kernel)];
-
-                    // Get pixel from the original image copy
-                    uint32_t offset = py * img->stride + px * channels;
-                    sum_r += orig_data[offset] * kernel_val;
-                    if(channels == 3){
-                        sum_g += orig_data[offset + 1] * kernel_val;
-                        sum_b += orig_data[offset + 2] * kernel_val;
-                    }
-                }
+    for(y = 0; y < height; ++y){
+        for(x = 0; x < width; ++x){
+            img_getpx(img1, x, y, pixel1);
+            img_getpx(img2, x, y, pixel2);
+            for(ch = 0; ch < channels; ++ch){
+                 diff = ABS(pixel1[ch] - pixel2[ch]);
+                pixel3[ch] = (diff < 0) ? 0 : diff;
             }
-
-            sum_r = MIN(MAX(sum_r, 0.0), 255.0);
-            if(channels == 3){
-                sum_g = MIN(MAX(sum_g, 0.0), 255.0);
-                sum_b = MIN(MAX(sum_b, 0.0), 255.0);
-            }
-
-            // Write output directly to the image
-            p = IMG_PIXEL_PTR(img, x, y);
-            p[0] = (uint8_t)sum_r;
-            if(channels == 3){
-                p[1] = (uint8_t)sum_g;
-                p[2] = (uint8_t)sum_b;
-            }
+            img_setpx(img, x, y, pixel3);
         }
     }
-
-    // Free the reference copy
-    free(orig_data);
+    return img;
 }
+
+
+

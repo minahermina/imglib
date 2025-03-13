@@ -10,11 +10,11 @@
 
 ## Features
 - Lightweight and dependency-free (where possible)
-- Written in clean and minimal C code
+- Written in ~~clean~~ and minimal C code
 - Compatible with all Unix-like systems
 - Portable `Makefile`
 - Supports only [PNM](https://netpbm.sourceforge.net/doc/pnm.html) formats (partially), with possible future support for other formats
-- Image processing functions including convolution, filtering, and transformations
+- Image processing functions including convolution and filtering.
 
 ## Current Version: v0.2.0-beta (2025-03-13)
 
@@ -66,7 +66,7 @@ The `Makefile` is written to be portable across different Unix systems, avoiding
   - By default, it uses Clang's sanitizer feature, which may not be supported on some Unix-like systems.
   - If encountering issues, consider changing the compiler (`CC=gcc` or another supported compiler).
 
-- `make example`: Compiles `main.c` as an example program using the library. The example program demonstrates loading an image and accessing pixel data:
+- `make example`: Compiles `main.c` as an example program using the library. The example program demonstrates loading an image and accessing pixel data.
 - `make clean`: Removes compiled objects and binaries.
 
 

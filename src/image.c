@@ -515,7 +515,6 @@ img_get_kernel(KernelType type, KernelSize size)
 
 
         case KERNEL_SHARPEN:
-            assert(size != IMG_KERNEL_3x3);
 
             /*TODO: implement a generalized funciton that creates a sharpen kernel of custom size n */
             float sharpen[] = {

@@ -14,6 +14,28 @@
 - Compatible with all Unix-like systems
 - Portable `Makefile`
 - Supports only [PNM](https://netpbm.sourceforge.net/doc/pnm.html) formats (partially), with possible future support for other formats
+- Image processing functions including convolution, filtering, and transformations
+
+## Current Version: v0.2.0-beta (2025-03-13)
+
+### Latest Features
+- **Image Processing Utilities**
+  - Image convolution with multiple border handling options (`img_convolve`, `img_filter2D`)
+  - Image resizing (`img_resize`)
+  - Grayscale conversion (`img_rgb2gray`)
+  - Image addition (`img_add`)
+
+- **Kernel Management**
+  - Support for various kernel types:
+    - Identity
+    - Box blur
+    - Sharpen
+    - Sobel (X and Y)
+    - Laplacian
+  - Kernel management functions:
+    - `img_get_kernel`
+    - `img_print_kernel`
+    - `img_free_kernel`
 
 ## Usage
 
@@ -38,12 +60,16 @@
 ## Makefile
 The `Makefile` is written to be portable across different Unix systems, avoiding GNU-specific extensions. It provides the following targets:
 
-- `make lib`: Compiles the shared object (`.so`) for the library.
+- `make release`: Compiles the shared object (`.so`) for the library for release build.
+- **`make debug`**  
+  - Compiles the shared object (`.so`) for the library in debug mode.
+  - By default, it uses Clang's sanitizer feature, which may not be supported on some Unix-like systems.
+  - If encountering issues, consider changing the compiler (`CC=gcc` or another supported compiler).
+
 - `make example`: Compiles `main.c` as an example program using the library. The example program demonstrates loading an image and accessing pixel data:
 - `make clean`: Removes compiled objects and binaries.
 
 
 ## Future Plans
 
-For a detailed list of planned features and enhancements, check out the [`TODO.md`](TODO.md) file. Here are some highlights of what's coming next:
-
+For a detailed list of planned features and enhancements, check out the [`TODO.md`](TODO.md) file.

@@ -40,7 +40,7 @@ example: debug
 	@echo "--------------------------------------------------------"
 	@echo "Building: Example ($(EXAMPLE_TARGET))"
 	@echo "--------------------------------------------------------"
-	$(CC) $(CPPFLAGS) $(CFLAGS) -fsanitize=memory $(EXAMPLE_SRC) -o $(EXAMPLE_TARGET) $(LDFLAGS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(EXAMPLE_SRC) -o $(EXAMPLE_TARGET) $(LDFLAGS)
 
 clean:
 	rm -f $(SHARED_LIB) $(EXAMPLE_TARGET)

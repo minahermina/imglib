@@ -152,6 +152,7 @@ img_load(const char* file)
     return img;
 }
 
+
 ImgType
 img_type(const char *file)
 {
@@ -216,7 +217,7 @@ img_loadpnm(const char* file, ImgType type)
         case IMG_PGM_BIN: /* FALLTHROUGH */
         case IMG_PGM_ASCII:
             channels = 1;
-            break;
+            return NULL;
         default:
             break;
     }
@@ -558,7 +559,7 @@ img_get_kernel(KernelType type, KernelSize size)
 }
 
 int8_t
-img_apply_filter(ImagePtr img, KernelType type, KernelSize size, BorderMode border_mode)
+img_filter2D(ImagePtr img, KernelType type, KernelSize size, BorderMode border_mode)
 {
     CHECK_PTR(img, -1);
 

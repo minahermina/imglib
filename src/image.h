@@ -89,7 +89,7 @@ int8_t img_disp(ImagePtr img, const char* custom_viewer);
 
 /* ----------- Kernel stuff----------- */
 Kernel img_get_kernel(KernelType type, KernelSize size);
-int8_t img_apply_filter(ImagePtr img, KernelType type, KernelSize size, BorderMode border_mode);
+int8_t img_filter2D(ImagePtr img, KernelType type, KernelSize size, BorderMode border_mode);
 void img_print_kernel(Kernel kernel);
 void img_free_kernel(Kernel kernel);
 /* ------------------------------------*/

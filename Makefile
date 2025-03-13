@@ -23,9 +23,9 @@ debug: $(SRC) $(HEADER)
 	@echo "Building: Debug shared library ($(SHARED_LIB))"
 	@echo -e "--------------------------------------------------------"
 	@if $(CC) --version | grep -i clang > /dev/null; then \
-		echo $(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) $(DEBUG_FLAGS) -fsanitize=memory -shared -fPIC -o $(SHARED_LIB); \
+		$(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) $(DEBUG_FLAGS) -fsanitize=memory -shared -fPIC -o $(SHARED_LIB); \
 	else \
-		echo $(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) $(DEBUG_FLAGS) -shared -fPIC -o $(SHARED_LIB); \
+		$(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) $(DEBUG_FLAGS) -shared -fPIC -o $(SHARED_LIB); \
 	fi
 	@echo ""
 
@@ -40,7 +40,7 @@ example: debug
 	@echo "--------------------------------------------------------"
 	@echo "Building: Example ($(EXAMPLE_TARGET))"
 	@echo "--------------------------------------------------------"
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(EXAMPLE_SRC) -o $(EXAMPLE_TARGET) $(LDFLAGS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fsanitize=memory $(EXAMPLE_SRC) -o $(EXAMPLE_TARGET) $(LDFLAGS)
 
 clean:
 	rm -f $(SHARED_LIB) $(EXAMPLE_TARGET)

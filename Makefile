@@ -15,16 +15,13 @@ EXAMPLE_SRC = main.c
 EXAMPLE_TARGET = main
 
 all: release
-
 lib: release
 
 debug: $(SRC) $(HEADER)
 	mkdir -p $(LIB_DIR)
 	@echo "--------------------------------------------------------"
-	@echo "  Building: Debug shared library ($(SHARED_LIB))"
-	@echo "  Compiler: $(CC)"
-	@echo "  Flags:    $(CFLAGS) $(DEBUG_FLAGS)"
-	@echo "--------------------------------------------------------"
+	@echo "Building: Debug shared library ($(SHARED_LIB))"
+	@echo -e "--------------------------------------------------------"
 	@if $(CC) --version | grep -i clang > /dev/null; then \
 		echo $(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) $(DEBUG_FLAGS) -fsanitize=memory -shared -fPIC -o $(SHARED_LIB); \
 	else \
@@ -35,24 +32,17 @@ debug: $(SRC) $(HEADER)
 release: $(SRC) $(HEADER)
 	mkdir -p $(LIB_DIR)
 	@echo "--------------------------------------------------------"
-	@echo "  Building: Release shared library ($(SHARED_LIB))"
-	@echo "  Compiler: $(CC)"
-	@echo "  Flags:    $(CFLAGS) $(RELEASE_FLAGS)"
+	@echo "--> Building: Release shared library ($(SHARED_LIB))"
 	@echo "--------------------------------------------------------"
 	$(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) $(RELEASE_FLAGS) -shared -fPIC -o $(SHARED_LIB)
 
-example: 
+example: debug
 	@echo "--------------------------------------------------------"
-	@echo "  Building: Example ($(EXAMPLE_TARGET))"
-	@echo "  Compiler: $(CC)"
+	@echo "Building: Example ($(EXAMPLE_TARGET))"
 	@echo "--------------------------------------------------------"
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(EXAMPLE_SRC) -o $(EXAMPLE_TARGET) $(LDFLAGS)
-
-example_debug: debug example
-
-example_release: release example
 
 clean:
 	rm -f $(SHARED_LIB) $(EXAMPLE_TARGET)
 
-.PHONY: all lib debug release example example_debug example_release clean
+.PHONY: all lib debug release example clean

@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <assert.h>
 
 #include "image.h"
 
@@ -36,7 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define P(x)                      (x <= 0 ? 0 : x)
 #define IMG_PIXEL_PTR(img, x, y)  ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
 #define IMG_ARR_SIZE(x)           (sizeof(x) / sizeof((x)[0]))
-#define VAR(var) fprintf(stderr, "[DEBUG] %s = %d\n", #var, (var))
+#define VAR(var)                  fprintf(stderr, "[DEBUG] %s = %d\n", #var, (var))
+#define KERNEL_ASSERT(x)          assert((x).data != NULL)
 
 /*TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
 #define HEX_TO_ASCII(hex)               (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}

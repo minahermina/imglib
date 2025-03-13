@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef IMAGE_LIB
 #define IMAGE_LIB
 #include <stdint.h>
-
+#include <stdlib.h>
 
 typedef enum {
     IMG_UNKNOWN = -1,
@@ -35,7 +35,17 @@ typedef enum {
     IMG_KERNEL_5x5 = 5,
     IMG_KERNEL_7x7 = 7,
     IMG_KERNEL_11x11 = 7,
-} ImgKernelSize;
+} KernelSize;
+
+typedef enum {
+    KERNEL_IDENTITY,
+    KERNEL_BOX_BLUR,
+    KERNEL_GAUSSIAN_BLUR,
+    KERNEL_SHARPEN,
+    KERNEL_SOBEL_X,
+    KERNEL_SOBEL_Y,
+    KERNEL_LAPLACIAN,
+} KernelType;
 
 typedef struct {
     uint8_t *data;
@@ -51,7 +61,7 @@ typedef struct {
 } Image;
 
 typedef struct {
-    int size;
+    size_t size;
     float *data;
 } Kernel;
 
@@ -76,6 +86,13 @@ void img_print(ImagePtr img);
 int8_t img_disp(ImagePtr img, const char* custom_viewer);
 
 /*Image Processing Functions*/
+
+/* ----------- Kernel stuff----------- */
+Kernel img_get_kernel(KernelType type, KernelSize size);
+int8_t img_apply_filter(ImagePtr img, KernelType type, KernelSize size, BorderMode border_mode);
+void img_print_kernel(Kernel kernel);
+void img_free_kernel(Kernel kernel);
+/* ------------------------------------*/
 void img_convolve(ImagePtr img, Kernel kernel, BorderMode border_mode);
 ImagePtr img_rgb2gray(ImagePtr img);
 ImagePtr img_resize(ImagePtr src, uint16_t new_width, uint16_t new_height);

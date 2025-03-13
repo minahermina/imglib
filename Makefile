@@ -36,7 +36,7 @@ release: $(SRC) $(HEADER)
 	@echo "--------------------------------------------------------"
 	$(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) $(RELEASE_FLAGS) -shared -fPIC -o $(SHARED_LIB)
 
-example: debug
+example: release
 	@echo "--------------------------------------------------------"
 	@echo "Building: Example ($(EXAMPLE_TARGET))"
 	@echo "--------------------------------------------------------"

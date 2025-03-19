@@ -815,12 +815,17 @@ img_add(ImagePtr img1, ImagePtr img2)
 }
 
 
+/*
+    https://homepages.inf.ed.ac.uk/rbf/HIPR2/pixsub.htm
+    TODO: implement multiple subtraction methods (direct subtraction, absolute difference, and wrapped values)
+    and allow the user to select their preferred method
+*/
 ImagePtr
 img_subtract(ImagePtr img1, ImagePtr img2)
 {
     ImagePtr img = NULL;
     uint16_t x, y, width, height, diff;
-    uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0}, pixel3[] = {0,0,0,0};
+    uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
 
 
     CHECK_COND(img1 == NULL || img2 == NULL, "", NULL);
@@ -844,10 +849,10 @@ img_subtract(ImagePtr img1, ImagePtr img2)
             img_getpx(img1, x, y, pixel1);
             img_getpx(img2, x, y, pixel2);
             for(ch = 0; ch < channels; ++ch){
-                 diff = ABS(pixel1[ch] - pixel2[ch]);
-                pixel3[ch] = (diff < 0) ? 0 : diff;
+                diff = pixel1[ch] - pixel2[ch];
+                pixel2[ch] = MAX(0, diff);
             }
-            img_setpx(img, x, y, pixel3);
+            img_setpx(img, x, y, pixel2);
         }
     }
     return img;

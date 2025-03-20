@@ -1,5 +1,9 @@
 # TODO
 
+## Error handling
+
+- [ ] **Implement structured error handling system with meaningful error codes, and user-friendly messages for efficient debugging**
+
 ## Custom Convolution Function
 
 - [x] **Convolution Function**: Implement a custom 2D convolution function that accepts user-defined filters for image processing.

@@ -20,7 +20,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef IMAGE_LIB
 #define IMAGE_LIB
 #include <stdint.h>
-#include <stdlib.h>
+
+#define IMG_ERROR_MAX_STRING_SIZE 64
+
+#define img_err2str(status) \
+    img_strerror((char[IMG_ERROR_MAX_STRING_SIZE]){0}, IMG_ERROR_MAX_STRING_SIZE, status)
 
 typedef enum {
     IMG_UNKNOWN = -1,
@@ -47,6 +51,20 @@ typedef enum {
     KERNEL_LAPLACIAN,
 } KernelType;
 
+typedef enum {
+    IMG_OK                      =  1,   /* No error, operation successful                */
+    IMG_ERR_FILE_NOT_FOUND      = -1,   /* The specified image file was not found        */
+    IMG_ERR_FILE_READ           = -2,   /* Error reading the image file                  */
+    IMG_ERR_FILE_WRITE          = -3,   /* Error writing to the image file               */
+    IMG_ERR_INVALID_FORMAT      = -4,   /* The image format is not supported or invalid  */
+    IMG_ERR_MEMORY              = -5,   /* Memory allocation failed                      */
+    IMG_ERR_DIMENSIONS          = -6,   /* Invalid image dimensions                      */
+    /* maybe used ? idk */
+    IMG_ERR_COLOR_SPACE         = -7,   /* Unsupported or invalid color space            */
+    IMG_ERR_CORRUPT_DATA        = -8,   /* The image data is corrupted                   */
+    IMG_ERR_UNKNOWN             = -9    /* Unknown error                                 */
+} ImgError;
+
 typedef struct {
     uint8_t *data;
     /* 
@@ -58,6 +76,7 @@ typedef struct {
     uint16_t height;
     uint8_t  channels;
     ImgType type;
+    ImgError status;
 } Image;
 
 typedef struct {
@@ -84,6 +103,7 @@ ImagePtr img_cpy(ImagePtr src);
 void img_free(ImagePtr img);
 void img_print(ImagePtr img);
 int8_t img_disp(ImagePtr img, const char* custom_viewer);
+const char * img_strerror(char * buf, size_t sz , ImgError status);
 
 /*Image Processing Functions*/
 

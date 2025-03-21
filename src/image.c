@@ -56,6 +56,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
         return ret_val; \
     }
 
+#define ERROR(errcode, str) \
+    {errcode, str}
+
+
+struct error_entry {
+    ImgError errcode;
+    const char *str;
+};
+
+static const struct error_entry error_entries[] = {
+    ERROR(IMG_OK,                   "Everything is okay!"),
+    ERROR(IMG_ERR_FILE_NOT_FOUND,   "File not found"),
+    ERROR(IMG_ERR_FILE_READ,        "Error reading the file"),
+    ERROR(IMG_ERR_FILE_WRITE,       "Error writing to the file"),
+    ERROR(IMG_ERR_INVALID_FORMAT,   "Invalid image format"),
+    ERROR(IMG_ERR_MEMORY,           "Memory allocation failed"),
+    ERROR(IMG_ERR_CORRUPT_DATA,     "Corrupted image data"),
+    ERROR(IMG_ERR_DIMENSIONS,       "Invalid image dimensions"),
+    ERROR(IMG_ERR_COLOR_SPACE,      "Unsupported or invalid color space"),
+    ERROR(IMG_ERR_UNKNOWN,          "Unknown error")
+};
+
 static inline uint32_t
 calc_stride(uint16_t width, uint8_t channels)
 {
@@ -469,6 +491,27 @@ img_disp(ImagePtr img, const char* imgviewer)
 
     return 0;
 }
+
+
+/* void
+img_get_errromsg(char *buf, size_t sz, ImgError status)
+{
+    size_t i;
+    const struct error_entry* entry = NULL;
+    for(i = 0; i < IMG_ARR_SIZE(error_entries); ++i ){
+        if(status == error_entries[i].errcode){
+            entry = & error_entries[i];
+        }
+    }
+    strncpy(buf, entry->str, sz);
+}
+
+const char *
+img_strerror(char *buf, size_t sz, ImgError status)
+{
+    img_get_errromsg(buf, sz, status);
+    return buf;
+} */
 
 Kernel kernel_alloc(KernelSize sz){
     Kernel kernel = {0};

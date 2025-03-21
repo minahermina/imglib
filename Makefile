@@ -32,7 +32,7 @@ debug: $(SRC) $(HEADER)
 release: $(SRC) $(HEADER)
 	mkdir -p $(LIB_DIR)
 	@echo "--------------------------------------------------------"
-	@echo "--> Building: Release shared library ($(SHARED_LIB))"
+	@echo "Building: Release shared library ($(SHARED_LIB))"
 	@echo "--------------------------------------------------------"
 	$(CC) $(CPPFLAGS) $(SRC) $(CFLAGS) $(RELEASE_FLAGS) -shared -fPIC -o $(SHARED_LIB)
 

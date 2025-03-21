@@ -491,7 +491,7 @@ img_disp(Image img, const char* imgviewer)
 }
 
 
-/* void
+void
 img_get_errromsg(char *buf, size_t sz, ImgError status)
 {
     size_t i;
@@ -509,7 +509,7 @@ img_strerror(char *buf, size_t sz, ImgError status)
 {
     img_get_errromsg(buf, sz, status);
     return buf;
-} */
+}
 
 Kernel kernel_alloc(KernelSize sz){
     Kernel kernel = {0};

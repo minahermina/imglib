@@ -17,7 +17,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -40,8 +39,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define VAR(var)                  fprintf(stderr, "[DEBUG] %s = %d\n", #var, (var))
 #define KERNEL_ASSERT(x)          assert((x).data != NULL)
 
-/*TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
-#define HEX_TO_ASCII(hex)               (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
+/* TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
+#define HEX_TO_ASCII(hex)        (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
 
 /* TODO: Replace error-handling macros with a more robust error-handling mechanism */
 #define CHECK_ALLOC(ptr) \

@@ -86,7 +86,7 @@ calc_stride(uint16_t width, uint8_t channels)
 
 /* TODO: Replace current_pos logic with x, y to use img_getpx & img_setpx*/
 static int8_t
-addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
+addpixel(Image *img, const uint8_t *pixel, uint32_t *current_pos)
 {
     uint8_t *p, i;
     uint32_t x, y;
@@ -113,10 +113,10 @@ addpixel(ImagePtr img, const uint8_t *pixel, uint32_t *current_pos)
     return 1;
 }
 
-ImagePtr
+Image
 img_create(uint16_t width, uint16_t height, uint8_t channels)
 {
-    ImagePtr img;
+    Image img = {0};
 
     /*TODO: Extend channel support beyond the current 1-4 limit to accommodate additional color spaces:
      * - LAB (3 channels)
@@ -126,32 +126,32 @@ img_create(uint16_t width, uint16_t height, uint8_t channels)
      */
     CHECK_COND(width == 0 || height == 0 || channels < 1 || channels > 4,
            "Invalid image dimensions or channels (width/height must be > 0, channels must be 1-4)",
-           NULL);
+           img);
 
-    img = (ImagePtr) malloc(sizeof(Image));
-    CHECK_ALLOC(img)
+    // img = (Image *) malloc(sizeof(Image));
+    // CHECK_ALLOC(img)
 
-    img->stride = calc_stride(width, channels);
-    img->data = (uint8_t*) malloc(height * img->stride);
-    CHECK_PTR(img->data, NULL);
+    img.stride = calc_stride(width, channels);
+    img.data = (uint8_t*) malloc(height * img.stride);
+    CHECK_PTR(img.data, img);
 
-    memset(img->data, 0, height * img->stride);
+    memset(img.data, 0, height * img.stride);
 
-    img->width = width;
-    img->height = height;
-    img->channels = channels;
-    img->type = -1;
+    img.width = width;
+    img.height = height;
+    img.channels = channels;
+    img.type = -1;
 
     return img;
 }
 
-ImagePtr
+Image
 img_load(const char* file)
 {
-    ImagePtr img = NULL;
+    Image img = {0};
     ImgType type;
 
-    CHECK_COND(file == NULL , "" ,NULL );
+    CHECK_COND(file == NULL , "" ,img );
 
     type = img_type(file);
     switch(type) {
@@ -160,11 +160,11 @@ img_load(const char* file)
         case IMG_PGM_BIN:
         case IMG_PGM_ASCII:
             img = img_loadpnm(file, type);
-            if (img) {
-                img->type = type;
+            if (img.data) {
+                img.type = type;
             }else{
                 fprintf(stderr, "Error loading image: %s\n", file);
-                return NULL;
+                return img;
             }
             break;
         default:
@@ -216,10 +216,10 @@ img_type(const char *file)
 
 
 /* TODO: Optimize this funciton*/
-ImagePtr
+Image
 img_loadpnm(const char* file, ImgType type)
 {
-    ImagePtr img;
+    Image img = {0};
     ssize_t imgfile;
     FILE* tmp_file;
     uint8_t pixel[3], channels, ch, leftover[2] = {0}, leftover_size = 0;
@@ -229,7 +229,7 @@ img_loadpnm(const char* file, ImgType type)
 
     tmp_file = fopen(file, "rb");
     if (tmp_file == NULL)
-        return NULL;
+        return img;
 
     switch(type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
@@ -239,30 +239,30 @@ img_loadpnm(const char* file, ImgType type)
         case IMG_PGM_BIN: /* FALLTHROUGH */
         case IMG_PGM_ASCII:
             channels = 1;
-            return NULL;
+            return img;
         default:
             break;
     }
 
     if (!fgets(line, sizeof(line), tmp_file)) {
         fclose(tmp_file);
-        return NULL;
+        return img;
     }  /* Read PNM magic number*/
 
     do {
         if (!fgets(line, sizeof(line), tmp_file)) {
-            fclose(tmp_file); return NULL;
+            fclose(tmp_file); return img;
         }
     } while (line[0] == '#'); /* Read width & height*/
 
     if (!sscanf(line, "%hu %hu", &w, &h) ) {
         fclose(tmp_file);
-        return NULL;
+        return img;
     }
 
     do {
         if (!fgets(line, sizeof(line), tmp_file)) {
-            fclose(tmp_file); return NULL;
+            fclose(tmp_file); return img;
         }
     } while (line[0] == '#'); /* Ignore depth info, typically 255*/
 
@@ -271,14 +271,14 @@ img_loadpnm(const char* file, ImgType type)
 
     imgfile = open(file, O_RDONLY);
     if (imgfile < 0)
-        return NULL;
+        return img;
 
     lseek(imgfile, pos, SEEK_SET);
 
     img = img_create(w, h, channels);
-    if (img == NULL) {
+    if (img.data == NULL) {
         close(imgfile);
-        return NULL;
+        return img;
     }
 
 
@@ -294,10 +294,10 @@ img_loadpnm(const char* file, ImgType type)
             for (ch = 0; ch < channels; ch++) {
                 pixel[ch] = chunk[i + ch];
             }
-            if (addpixel(img, pixel, &curr_pos) < 0) {
+            if (addpixel(&img, pixel, &curr_pos) < 0) {
                 close(imgfile);
                 img_free(img);
-                return NULL;
+                return img;
             }
         }
 
@@ -310,7 +310,7 @@ img_loadpnm(const char* file, ImgType type)
 }
 
 int8_t
-img_getpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
+img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
     CHECK_PTR(pixel, -1);
@@ -328,7 +328,7 @@ img_getpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
 }
 
 int8_t
-img_setpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
+img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
     CHECK_PTR(pixel, -1);
@@ -346,34 +346,34 @@ img_setpx(ImagePtr img, uint16_t x, uint16_t y, uint8_t *pixel)
     return 1;
 }
 
-ImagePtr
-img_cpy(ImagePtr src)
+Image
+img_cpy(Image src)
 {
-    ImagePtr img = NULL;
+    Image img = {0};
 
-    CHECK_COND(src == NULL, "", NULL);
+    CHECK_COND(src.data == NULL, "", img);
 
-    img = img_create(src->width, src->height, src->channels);
-    CHECK_ALLOC(img);
-    img->type = src->type;
+    img = img_create(src.width, src.height, src.channels);
+    CHECK_COND(img.data == NULL, "", img);
+    img.type = src.type;
 
-    memcpy(img->data, src->data, src->height * src->stride);
+    memcpy(img.data, src.data, src.height * src.stride);
 
     return img;
 }
 
 uint8_t
-img_save(ImagePtr img, const char *file)
+img_save(Image img, const char *file)
 {
-    if(img == NULL || file == NULL || strlen(file) < 1)
+    if(img.data == NULL || file == NULL || strlen(file) < 1)
         return -1;
 
-    switch (img->type) {
+    switch (img.type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
         case IMG_PPM_ASCII:
         case IMG_PGM_ASCII:
         case IMG_PGM_BIN:
-            img_savepnm(img , file);
+            img_savepnm(&img , file);
             break;
         default:
             fprintf(stderr, "Error: Unknown ImageType!\n(function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__); \
@@ -383,7 +383,7 @@ img_save(ImagePtr img, const char *file)
 }
 
 uint8_t
-img_savepnm(ImagePtr img, const char *file)
+img_savepnm(Image *img, const char *file)
 {
     FILE *fp;
     uint32_t x, y;
@@ -412,19 +412,18 @@ img_savepnm(ImagePtr img, const char *file)
 }
 
 void
-img_free(ImagePtr img)
+img_free(Image img)
 {
-    if(img == NULL) {
+    if(img.data == NULL) {
         fprintf(stderr, "img is NULL!");
         return;
     }
 
-    free(img->data);
-    free(img);
+    free(img.data);
 }
 
 void
-img_print(ImagePtr img)
+img_print(Image *img)
 {
     uint16_t i, j, k;
     uint8_t pixel[] = {0, 0, 0, 0};
@@ -460,7 +459,7 @@ img_print(ImagePtr img)
 
 
 int8_t
-img_disp(ImagePtr img, const char* imgviewer)
+img_disp(Image img, const char* imgviewer)
 {
     int fd;
     char template[] = "/tmp/img_XXXXXX", CMD[0xFF];
@@ -604,7 +603,7 @@ img_get_kernel(KernelType type, KernelSize size)
 }
 
 int8_t
-img_filter2D(ImagePtr img, KernelType type, KernelSize size, BorderMode border_mode)
+img_filter2D(Image *img, KernelType type, KernelSize size, BorderMode border_mode)
 {
     CHECK_PTR(img, -1);
 
@@ -649,7 +648,7 @@ img_free_kernel(Kernel kernel)
 /* TODO: This is probably the worst implementation ever.
    Many things can be handled more efficiently.
 */
-void img_convolve(ImagePtr img, Kernel kernel, BorderMode border_mode)
+void img_convolve(Image *img, Kernel kernel, BorderMode border_mode)
 {
     uint8_t channels, *p;
     uint16_t x, y, half_kernel;
@@ -720,16 +719,16 @@ void img_convolve(ImagePtr img, Kernel kernel, BorderMode border_mode)
     free(orig_data);
 }
 
-ImagePtr
-img_rgb2gray(ImagePtr img)
+Image *
+img_rgb2gray(Image *img)
 {
-    ImagePtr newimg;
+    Image *newimg;
     uint16_t x,y;
     uint8_t pixel[4] = {0, 0, 0, 0}, newpixel[1] = {0};
 
     CHECK_PTR(img, NULL);
 
-    newimg = (ImagePtr) malloc(sizeof(Image));
+    newimg = (Image *) malloc(sizeof(Image));
     CHECK_ALLOC(newimg);
 
     newimg->width = img->width;
@@ -771,22 +770,22 @@ cubic_kernel(float x)
     Reference: https://iopscience.iop.org/article/10.1088/1742-6596/1114/1/012066
 */
 /* TODO: Optimize redundant calculations and memory access */
-ImagePtr
-img_resize(ImagePtr src, uint16_t new_width, uint16_t new_height)
+Image
+img_resize(Image src, uint16_t new_width, uint16_t new_height)
 {
-    ImagePtr img;
+    Image img = {0};
     float scale_x, scale_y, src_x, src_y, value;
     int ix, iy, c, n, m;
     uint16_t  x, y;
     uint8_t pixel[3] = {0}, spixel[3];
-    CHECK_PTR(src , NULL);
+    CHECK_PTR(src.data , img);
 
-    img = img_create(new_width, new_height, src->channels);
-    img->type = src->type;
-    CHECK_PTR(img, NULL);
+    img = img_create(new_width, new_height, src.channels);
+    img.type = src.type;
+    CHECK_PTR(img.data, img);
 
-    scale_x = (float)src->width / new_width;
-    scale_y = (float)src->height / new_height;
+    scale_x = (float)src.width / new_width;
+    scale_y = (float)src.height / new_height;
 
     for (y = 0; y < new_height; y++) {
         for (x = 0; x < new_width; x++) {
@@ -795,7 +794,7 @@ img_resize(ImagePtr src, uint16_t new_width, uint16_t new_height)
             ix = (int)FLOOR(src_x);
             iy = (int)FLOOR(src_y);
 
-            for (c = 0; c < src->channels; c++) {
+            for (c = 0; c < src.channels; c++) {
                 value = 0.0f;
                 for (m = -1; m <= 2; m++) {
                     for (n = -1; n <= 2; n++) {
@@ -803,99 +802,98 @@ img_resize(ImagePtr src, uint16_t new_width, uint16_t new_height)
                         int sy = iy + m;
                         if (sx < 0) sx = 0;
                         if (sy < 0) sy = 0;
-                        sx = (sx >= src->width ? src->width - 1 : sx);
-                        sy = (sy >= src->height ? src->height - 1 : sy);
+                        sx = (sx >= src.width ? src.width - 1 : sx);
+                        sy = (sy >= src.height ? src.height - 1 : sy);
 
-                        img_getpx(src, sx, sy, spixel);
+                        img_getpx(&src, sx, sy, spixel);
                         value += spixel[c] * cubic_kernel(n - (src_x - ix)) * cubic_kernel(m - (src_y - iy));
                     }
                 }
                 pixel[c] = MIN(MAX(value, 0), 255);
             }
-            img_setpx(img, x, y, pixel);
+            img_setpx(&img, x, y, pixel);
         }
     }
     return img;
 }
 
 
-ImagePtr
-img_add(ImagePtr img1, ImagePtr img2)
+Image
+img_add(Image img1, Image img2)
 {
-    ImagePtr img = NULL;
+    Image img = {0};
     uint16_t x, y, width, height, sum;
     uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
 
 
-    CHECK_COND(img1 == NULL || img2 == NULL, "", NULL);
-    CHECK_COND(img1->width != img2->width        ||
-               img1->height != img2->height      ||
-               img1->channels != img2->channels ||
-               img1->type != img2->type,
+    CHECK_COND(img1.data == NULL || img2.data == NULL, "", img);
+    CHECK_COND(img1.width != img2.width        ||
+               img1.height != img2.height      ||
+               img1.channels != img2.channels ||
+               img1.type != img2.type,
                "",
-               NULL);
+               img);
 
-    width = img1->width;
-    height = img1->height;
-    channels = img1->channels;
+    width = img1.width;
+    height = img1.height;
+    channels = img1.channels;
 
     img = img_create(width, height, channels);
-    img->type = img1->type;
-    CHECK_ALLOC(img);
+    img.type = img1.type;
+    CHECK_PTR(img.data, img);
 
     for(y = 0; y < height; ++y){
         for(x = 0; x < width; ++x){
-            img_getpx(img1, x, y, pixel1);
-            img_getpx(img2, x, y, pixel2);
+            img_getpx(&img1, x, y, pixel1);
+            img_getpx(&img2, x, y, pixel2);
             for(ch = 0; ch < channels; ++ch){
                 sum = (uint16_t) pixel1[ch] + (uint16_t) pixel2[ch];
                 pixel1[ch] = (uint8_t)(MIN(255, sum));
             }
-            img_setpx(img, x, y, pixel1);
+            img_setpx(&img, x, y, pixel1);
         }
     }
     return img;
 }
-
 
 /*
     https://homepages.inf.ed.ac.uk/rbf/HIPR2/pixsub.htm
     TODO: implement multiple subtraction methods (direct subtraction, absolute difference, and wrapped values)
     and allow the user to select their preferred method
 */
-ImagePtr
-img_subtract(ImagePtr img1, ImagePtr img2)
+Image
+img_subtract(Image img1, Image img2)
 {
-    ImagePtr img = NULL;
+    Image img = {0};
     uint16_t x, y, width, height, diff;
     uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
 
 
-    CHECK_COND(img1 == NULL || img2 == NULL, "", NULL);
-    CHECK_COND(img1->width != img2->width        ||
-               img1->height != img2->height      ||
-               img1->channels != img2->channels ||
-               img1->type != img2->type,
+    CHECK_COND(img1.data == NULL || img2.data == NULL, "", img);
+    CHECK_COND(img1.width != img2.width        ||
+               img1.height != img2.height      ||
+               img1.channels != img2.channels ||
+               img1.type != img2.type,
                "",
-               NULL);
+               img);
 
-    width = img1->width;
-    height = img1->height;
-    channels = img1->channels;
+    width = img1.width;
+    height = img1.height;
+    channels = img1.channels;
 
     img = img_create(width, height, channels);
-    img->type = img1->type;
-    CHECK_ALLOC(img);
+    img.type = img1.type;
+    CHECK_PTR(img.data, img);
 
     for(y = 0; y < height; ++y){
         for(x = 0; x < width; ++x){
-            img_getpx(img1, x, y, pixel1);
-            img_getpx(img2, x, y, pixel2);
+            img_getpx(&img1, x, y, pixel1);
+            img_getpx(&img2, x, y, pixel2);
             for(ch = 0; ch < channels; ++ch){
                 diff = pixel1[ch] - pixel2[ch];
                 pixel2[ch] = MAX(0, diff);
             }
-            img_setpx(img, x, y, pixel2);
+            img_setpx(&img, x, y, pixel2);
         }
     }
     return img;

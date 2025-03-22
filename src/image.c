@@ -531,6 +531,11 @@ img_get_kernel(KernelType type, KernelSize size)
         -1.0f, -2.0f, -1.0f,
         0.0f,  0.0f,  0.0f,
         1.0f,  2.0f,  1.0f
+    },
+    sharpen[] = {
+        0.0f, -1.0f, 0.0f,
+        -1.0f, 5.0f, -1.0f,
+        0.0f, -1.0f, 0.0f
     };
 
 
@@ -558,11 +563,6 @@ img_get_kernel(KernelType type, KernelSize size)
         case KERNEL_SHARPEN:
 
             /*TODO: implement a generalized funciton that creates a sharpen kernel of custom size n */
-            float sharpen[] = {
-                0.0f, -1.0f, 0.0f,
-                -1.0f, 5.0f, -1.0f,
-                0.0f, -1.0f, 0.0f
-            };
 
             /*May be replaced by fill_kernel util ?, i don't know*/
             memcpy(kernel.data, sharpen, size_squared * sizeof(float));

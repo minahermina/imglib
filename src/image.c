@@ -38,26 +38,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define IMG_ARR_SIZE(x)           (sizeof(x) / sizeof((x)[0]))
 #define VAR(var)                  fprintf(stderr, "[DEBUG] %s = %d\n", #var, (var))
 #define KERNEL_ASSERT(x)          assert((x).data != NULL)
-
 /* TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
-#define HEX_TO_ASCII(hex)        (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
-
-/* TODO: Replace error-handling macros with a more robust error-handling mechanism */
-#define CHECK_ALLOC(ptr) \
-    CHECK_COND(ptr == NULL, "Memmory Allocation failed", NULL)\
-
-#define CHECK_PTR(ptr, ret_val) \
-    CHECK_COND(ptr == NULL, " ", ret_val) \
-
-#define CHECK_COND(ex, msg, ret_val) \
+#define HEX_TO_ASCII(hex)         (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
+#define IMG_CHECK_COND(ex, img, errcode, ret) \
     if (ex) { \
-        fprintf(stderr, "Error: (%s) is True!\n(function: %s, line %d, file %s)\n", #ex, __func__, __LINE__, __FILE__); \
-        return ret_val; \
+        fprintf(stderr, "Error: (%s) is True!\n(function: %s, line %d, file %s)\n", \
+                #ex, __func__, __LINE__, __FILE__); \
+        (img).status = errcode; \
+        return ret; \
     }
 
-#define ERROR(errcode, str) \
-    {errcode, str}
-
+#define ERROR(errcode, str)       {errcode, str}
 
 struct error_entry {
     ImgError errcode;
@@ -90,9 +81,7 @@ addpixel(Image *img, const uint8_t *pixel, uint32_t *current_pos)
     uint8_t *p, i;
     uint32_t x, y;
 
-    CHECK_COND(img == NULL || pixel == NULL || current_pos == NULL,
-               "Error: Invalid input (img, pixel, or position is NULL).\n",
-               -1);
+    IMG_CHECK_COND(img == NULL || pixel == NULL || current_pos == NULL, *img, IMG_ERR_DIMENSIONS, -1);
 
     if (*current_pos >= (uint32_t)(img->width * img->height)) {
         fprintf(stderr, "Error: Exceeded image capacity.\n");
@@ -116,6 +105,7 @@ Image
 img_create(uint16_t width, uint16_t height, uint8_t channels)
 {
     Image img = {0};
+    img.status = IMG_OK;
 
     /*TODO: Extend channel support beyond the current 1-4 limit to accommodate additional color spaces:
      * - LAB (3 channels)
@@ -123,16 +113,14 @@ img_create(uint16_t width, uint16_t height, uint8_t channels)
      * - CMYKA (5 channels)
      * - etc.
      */
-    CHECK_COND(width == 0 || height == 0 || channels < 1 || channels > 4,
-           "Invalid image dimensions or channels (width/height must be > 0, channels must be 1-4)",
-           img);
+    IMG_CHECK_COND(width == 0 || height == 0 || channels < 1 || channels > 4, img, IMG_ERR_DIMENSIONS, img);
 
     // img = (Image *) malloc(sizeof(Image));
     // CHECK_ALLOC(img)
 
     img.stride = calc_stride(width, channels);
     img.data = (uint8_t*) malloc(height * img.stride);
-    CHECK_PTR(img.data, img);
+    IMG_CHECK_COND(img.data == NULL, img, IMG_ERR_MEMORY, img);
 
     memset(img.data, 0, height * img.stride);
 
@@ -144,36 +132,6 @@ img_create(uint16_t width, uint16_t height, uint8_t channels)
     return img;
 }
 
-Image
-img_load(const char* file)
-{
-    Image img = {0};
-    ImgType type;
-
-    CHECK_COND(file == NULL , "" ,img );
-
-    type = img_type(file);
-    switch(type) {
-        case IMG_PPM_BIN: /* FALLTHROUGH */
-        case IMG_PPM_ASCII:
-        case IMG_PGM_BIN:
-        case IMG_PGM_ASCII:
-            img = img_loadpnm(file, type);
-            if (img.data) {
-                img.type = type;
-            }else{
-                fprintf(stderr, "Error loading image: %s\n", file);
-                return img;
-            }
-            break;
-        default:
-            fprintf(stderr, "Unsupported or invalid image format\n");
-    }
-
-    return img;
-}
-
-
 ImgType
 img_type(const char *file)
 {
@@ -182,7 +140,11 @@ img_type(const char *file)
     char line[MAXLINE];
 
     f = fopen(file, "rb");
-    CHECK_PTR(f, IMG_UNKNOWN);
+
+    if(f == NULL){
+        fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__); \
+        return IMG_UNKNOWN;
+    }
 
     while (fgets(line, MAXLINE, f) != NULL) {
         if (line[0] == '#') {
@@ -212,6 +174,33 @@ img_type(const char *file)
     }
 }
 
+Image
+img_load(const char* file)
+{
+    Image img = {0};
+    FILE* f;
+    ImgType type;
+    f = fopen(file, "r");
+    IMG_CHECK_COND(f == NULL, img, IMG_ERR_FILE_NOT_FOUND, img);
+
+    type = img_type(file);
+    switch(type) {
+        case IMG_PPM_BIN: /* FALLTHROUGH */
+        case IMG_PPM_ASCII:
+        case IMG_PGM_BIN:
+        case IMG_PGM_ASCII:
+            img = img_loadpnm(file, type);
+            break;
+        default:
+            img.status = IMG_ERR_INVALID_FORMAT;
+            fprintf(stderr, "Unsupported or invalid image format\n");
+    }
+
+    return img;
+}
+
+
+
 
 
 /* TODO: Optimize this funciton*/
@@ -219,6 +208,10 @@ Image
 img_loadpnm(const char* file, ImgType type)
 {
     Image img = {0};
+    img.status = IMG_OK;
+    img.type = type;
+
+
     ssize_t imgfile;
     FILE* tmp_file;
     uint8_t pixel[3], channels, ch, leftover[2] = {0}, leftover_size = 0;
@@ -227,8 +220,7 @@ img_loadpnm(const char* file, ImgType type)
     char line[MAXLINE], chunk[CHUNK_SIZE];
 
     tmp_file = fopen(file, "rb");
-    if (tmp_file == NULL)
-        return img;
+    IMG_CHECK_COND(tmp_file  == NULL, img, IMG_ERR_FILE_NOT_FOUND, img);
 
     switch(type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
@@ -245,6 +237,7 @@ img_loadpnm(const char* file, ImgType type)
 
     if (!fgets(line, sizeof(line), tmp_file)) {
         fclose(tmp_file);
+        img.status = IMG_ERR_FILE_READ;
         return img;
     }  /* Read PNM magic number*/
 
@@ -256,6 +249,7 @@ img_loadpnm(const char* file, ImgType type)
 
     if (!sscanf(line, "%hu %hu", &w, &h) ) {
         fclose(tmp_file);
+        img.status = IMG_ERR_FILE_READ;
         return img;
     }
 
@@ -269,17 +263,16 @@ img_loadpnm(const char* file, ImgType type)
     fclose(tmp_file);
 
     imgfile = open(file, O_RDONLY);
-    if (imgfile < 0)
-        return img;
+    IMG_CHECK_COND(imgfile < 0, img, IMG_ERR_FILE_READ, img);
 
     lseek(imgfile, pos, SEEK_SET);
 
     img = img_create(w, h, channels);
-    if (img.data == NULL) {
+    img.type = type;
+    if(img.status != IMG_OK) {
         close(imgfile);
         return img;
     }
-
 
     while ((bytesread = read(imgfile, chunk, sizeof(chunk))) > 0) {
         int total_bytes = bytesread + leftover_size;
@@ -295,7 +288,7 @@ img_loadpnm(const char* file, ImgType type)
             }
             if (addpixel(&img, pixel, &curr_pos) < 0) {
                 close(imgfile);
-                img_free(img);
+                img.status = IMG_ERR_CORRUPT_DATA;
                 return img;
             }
         }
@@ -312,9 +305,9 @@ int8_t
 img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
-    CHECK_PTR(pixel, -1);
 
-    if (x >= img->width || y >= img->height) {
+    if (img == NULL || pixel == NULL || x >= img->width || y >= img->height) {
+        fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
         return -1;
     }
 
@@ -330,9 +323,8 @@ int8_t
 img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
-    CHECK_PTR(pixel, -1);
-
-    if (x >= img->width || y >= img->height) {
+    if (img == NULL || pixel == NULL || x >= img->width || y >= img->height) {
+        fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
         return -1;
     }
 
@@ -350,10 +342,12 @@ img_cpy(Image src)
 {
     Image img = {0};
 
-    CHECK_COND(src.data == NULL, "", img);
+    IMG_CHECK_COND(src.data == NULL, img, IMG_ERR_NULL_DATA, img);
 
     img = img_create(src.width, src.height, src.channels);
-    CHECK_COND(img.data == NULL, "", img);
+    if(img.status != IMG_OK){
+        return img;
+    }
     img.type = src.type;
 
     memcpy(img.data, src.data, src.height * src.stride);
@@ -388,10 +382,14 @@ img_savepnm(Image *img, const char *file)
     uint32_t x, y;
     uint8_t *row, *pixel;
 
-    CHECK_PTR(img, -1);
+    if(img == NULL){
+        return -1;
+    }
 
     fp = fopen(file, "wb");
-    CHECK_PTR(fp, -1);
+    if(fp == NULL){
+        return -1;
+    }
 
     // Write header
     fprintf(fp, "%s\n%d %d\n255\n", HEX_TO_ASCII(img->type), img->width, img->height);
@@ -491,23 +489,17 @@ img_disp(Image img, const char* imgviewer)
 }
 
 
-void
-img_get_errromsg(char *buf, size_t sz, ImgError status)
+const char *
+img_strerror(char *buf, size_t sz, ImgError status)
 {
     size_t i;
     const struct error_entry* entry = NULL;
     for(i = 0; i < IMG_ARR_SIZE(error_entries); ++i ){
         if(status == error_entries[i].errcode){
-            entry = & error_entries[i];
+            entry = &error_entries[i];
         }
     }
     strncpy(buf, entry->str, sz);
-}
-
-const char *
-img_strerror(char *buf, size_t sz, ImgError status)
-{
-    img_get_errromsg(buf, sz, status);
     return buf;
 }
 
@@ -546,13 +538,13 @@ img_get_kernel(KernelType type, KernelSize size)
 
     kernel = kernel_alloc(size);
     switch(type) {
-        case KERNEL_IDENTITY:
+        case IMG_KERNEL_IDENTITY:
 
             memset(kernel.data, 0, size_squared * sizeof(float));
             kernel.data[center] = 1.0f;
             break;
 
-        case KERNEL_BOX_BLUR:
+        case IMG_KERNEL_BOX_BLUR:
 
             for (i = 0; i < (size_squared); i++) {
                 kernel.data[i] = 1.0f / size_squared ;
@@ -560,7 +552,7 @@ img_get_kernel(KernelType type, KernelSize size)
             break;
 
 
-        case KERNEL_SHARPEN:
+        case IMG_KERNEL_SHARPEN:
 
             /*TODO: implement a generalized funciton that creates a sharpen kernel of custom size n */
 
@@ -568,17 +560,17 @@ img_get_kernel(KernelType type, KernelSize size)
             memcpy(kernel.data, sharpen, size_squared * sizeof(float));
             break;
 
-        case KERNEL_SOBEL_X:
+        case IMG_KERNEL_SOBEL_X:
 
             memcpy(kernel.data, sobel_x, size_squared * sizeof(float));
             break;
 
-        case KERNEL_SOBEL_Y:
+        case IMG_KERNEL_SOBEL_Y:
 
             memcpy(kernel.data, sobel_y, size_squared * sizeof(float));
             break;
 
-        case KERNEL_LAPLACIAN:
+        case IMG_KERNEL_LAPLACIAN:
             /*TODO: implement a funciton that creates a laplacian kernel of custom size n */
             assert(size != IMG_KERNEL_3x3);
 
@@ -590,7 +582,7 @@ img_get_kernel(KernelType type, KernelSize size)
             memcpy(kernel.data, laplacian, size_squared * sizeof(float));
             break;
 
-        case KERNEL_GAUSSIAN_BLUR:
+        case IMG_KERNEL_GAUSSIAN_BLUR:
             /*TODO: implement the gaussian formula */
         default:
             fprintf(stderr, "Unknown kernel type\n");
@@ -604,7 +596,9 @@ img_get_kernel(KernelType type, KernelSize size)
 int8_t
 img_filter2D(Image *img, KernelType type, KernelSize size, BorderMode border_mode)
 {
-    CHECK_PTR(img, -1);
+    if(img == NULL){
+        return -1;
+    }
 
     Kernel kernel = img_get_kernel(type, size);
     if (kernel.data == NULL || kernel.size == 0) {
@@ -656,14 +650,20 @@ void img_convolve(Image *img, Kernel kernel, BorderMode border_mode)
     float kernel_val;
     uint32_t offset;
 
-    CHECK_COND(!img || !img->data || kernel.data == NULL|| kernel.size % 2 == 0,
-               "Invalid input parameters for convolution.\n", );
+    if(!img || !img->data || kernel.data == NULL|| kernel.size % 2 == 0) {
+        img->status = IMG_ERR_INVALID_PARAMETERS;
+        return;
+    }
 
     half_kernel = kernel.size /2;
     channels = img->channels;
     // Create a copy of the original image data for reference
     uint8_t *orig_data = (uint8_t *)malloc(img->height * img->stride);
-    CHECK_PTR(orig_data,);
+    if(orig_data == NULL){
+        img->status = IMG_ERR_MEMORY;
+        return;
+    }
+
     memcpy(orig_data, img->data, img->height * img->stride);
 
     for (y = 0; y < img->height; y++) {
@@ -725,10 +725,15 @@ img_rgb2gray(Image *img)
     uint16_t x,y;
     uint8_t pixel[4] = {0, 0, 0, 0}, newpixel[1] = {0};
 
-    CHECK_PTR(img, NULL);
+    if(img == NULL){
+        fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
+    }
+
 
     newimg = (Image *) malloc(sizeof(Image));
-    CHECK_ALLOC(newimg);
+    if(newimg == NULL){
+        fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
+    }
 
     newimg->width = img->width;
     newimg->height = img->height;
@@ -737,7 +742,9 @@ img_rgb2gray(Image *img)
     newimg->stride = calc_stride(newimg->width , 1);
     newimg->data = (uint8_t*) malloc(newimg->height * newimg->stride);
 
-    CHECK_ALLOC(newimg->data);
+    if(newimg->data == NULL){
+        fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
+    }
 
     for(x = 0; x < newimg->width; ++x) {
         for(y = 0; y < newimg->height; ++y) {
@@ -777,11 +784,18 @@ img_resize(Image src, uint16_t new_width, uint16_t new_height)
     int ix, iy, c, n, m;
     uint16_t  x, y;
     uint8_t pixel[3] = {0}, spixel[3];
-    CHECK_PTR(src.data , img);
+    if(src.status != IMG_OK){
+        img.status = IMG_ERR_UNKNOWN;
+        return img;
+    }
+
+
 
     img = img_create(new_width, new_height, src.channels);
     img.type = src.type;
-    CHECK_PTR(img.data, img);
+    if(img.status != IMG_OK){
+        return img;
+    }
 
     scale_x = (float)src.width / new_width;
     scale_y = (float)src.height / new_height;
@@ -825,13 +839,19 @@ img_add(Image img1, Image img2)
     uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
 
 
-    CHECK_COND(img1.data == NULL || img2.data == NULL, "", img);
-    CHECK_COND(img1.width != img2.width        ||
-               img1.height != img2.height      ||
-               img1.channels != img2.channels ||
-               img1.type != img2.type,
-               "",
-               img);
+    if(img1.data == NULL || img2.data == NULL){
+        img.status = IMG_ERR_INVALID_PARAMETERS;
+        return img;
+    }
+
+    if(img1.width != img2.width       ||
+       img1.height != img2.height     ||
+       img1.channels != img2.channels ||
+       img1.type != img2.type
+    ){
+        img.status = IMG_ERR_INVALID_PARAMETERS;
+        return img;
+    }
 
     width = img1.width;
     height = img1.height;
@@ -839,7 +859,10 @@ img_add(Image img1, Image img2)
 
     img = img_create(width, height, channels);
     img.type = img1.type;
-    CHECK_PTR(img.data, img);
+    if(img.status != IMG_OK){
+        return img;
+    }
+
 
     for(y = 0; y < height; ++y){
         for(x = 0; x < width; ++x){
@@ -868,13 +891,19 @@ img_subtract(Image img1, Image img2)
     uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
 
 
-    CHECK_COND(img1.data == NULL || img2.data == NULL, "", img);
-    CHECK_COND(img1.width != img2.width        ||
-               img1.height != img2.height      ||
-               img1.channels != img2.channels ||
-               img1.type != img2.type,
-               "",
-               img);
+    if(img1.data == NULL || img2.data == NULL){
+        img.status = IMG_ERR_INVALID_PARAMETERS;
+        return img;
+    }
+
+    if(img1.width != img2.width       ||
+       img1.height != img2.height     ||
+       img1.channels != img2.channels ||
+       img1.type != img2.type
+    ){
+        img.status = IMG_ERR_INVALID_PARAMETERS;
+        return img;
+    }
 
     width = img1.width;
     height = img1.height;
@@ -882,7 +911,9 @@ img_subtract(Image img1, Image img2)
 
     img = img_create(width, height, channels);
     img.type = img1.type;
-    CHECK_PTR(img.data, img);
+    if(img.status != IMG_OK){
+        return img;
+    }
 
     for(y = 0; y < height; ++y){
         for(x = 0; x < width; ++x){

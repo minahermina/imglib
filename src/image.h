@@ -42,13 +42,13 @@ typedef enum {
 } KernelSize;
 
 typedef enum {
-    KERNEL_IDENTITY,
-    KERNEL_BOX_BLUR,
-    KERNEL_GAUSSIAN_BLUR,
-    KERNEL_SHARPEN,
-    KERNEL_SOBEL_X,
-    KERNEL_SOBEL_Y,
-    KERNEL_LAPLACIAN,
+    IMG_KERNEL_IDENTITY,
+    IMG_KERNEL_BOX_BLUR,
+    IMG_KERNEL_GAUSSIAN_BLUR,
+    IMG_KERNEL_SHARPEN,
+    IMG_KERNEL_SOBEL_X,
+    IMG_KERNEL_SOBEL_Y,
+    IMG_KERNEL_LAPLACIAN,
 } KernelType;
 
 typedef enum {
@@ -58,11 +58,13 @@ typedef enum {
     IMG_ERR_FILE_WRITE          = -3,   /* Error writing to the image file               */
     IMG_ERR_INVALID_FORMAT      = -4,   /* The image format is not supported or invalid  */
     IMG_ERR_MEMORY              = -5,   /* Memory allocation failed                      */
-    IMG_ERR_DIMENSIONS          = -6,   /* Invalid image dimensions                      */
+    IMG_ERR_NULL_DATA           = -6,   /* Memory allocation failed                      */
+    IMG_ERR_INVALID_PARAMETERS  = -7,
+    IMG_ERR_DIMENSIONS          = -8,   /* Invalid image dimensions                      */
     /* maybe used ? idk */
-    IMG_ERR_COLOR_SPACE         = -7,   /* Unsupported or invalid color space            */
-    IMG_ERR_CORRUPT_DATA        = -8,   /* The image data is corrupted                   */
-    IMG_ERR_UNKNOWN             = -9    /* Unknown error                                 */
+    IMG_ERR_COLOR_SPACE         = -9,   /* Unsupported or invalid color space            */
+    IMG_ERR_CORRUPT_DATA        = -10,   /* The image data is corrupted                   */
+    IMG_ERR_UNKNOWN             = -11    /* Unknown error                                 */
 } ImgError;
 
 typedef struct {
@@ -92,7 +94,6 @@ typedef enum {
 
 Image img_create(uint16_t width, uint16_t height, uint8_t channels);
 Image img_load(const char* file);
-ImgType img_type(const char *file);
 Image img_loadpnm(const char* file, ImgType type);
 int8_t img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel);
 int8_t img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel);

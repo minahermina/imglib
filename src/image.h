@@ -52,13 +52,13 @@ typedef enum {
 } KernelType;
 
 typedef enum {
-    IMG_OK                      =  1,   /* No error, operation successful                */
+    IMG_OK                      =  0,   /* No error, operation successful                */
     IMG_ERR_FILE_NOT_FOUND      = -1,   /* The specified image file was not found        */
     IMG_ERR_FILE_READ           = -2,   /* Error reading the image file                  */
     IMG_ERR_FILE_WRITE          = -3,   /* Error writing to the image file               */
-    IMG_ERR_INVALID_FORMAT      = -4,   /* The image format is not supported or invalid  */
-    IMG_ERR_MEMORY              = -5,   /* Memory allocation failed                      */
-    IMG_ERR_NULL_DATA           = -6,   /* Memory allocation failed                      */
+    IMG_ERR_FILE_CREATE         = -4,
+    IMG_ERR_UNSUPPORTED_FORMAT  = -5,   /* The image format is not supported or invalid  */
+    IMG_ERR_MEMORY              = -6,   /* Memory allocation failed                      */
     IMG_ERR_INVALID_PARAMETERS  = -7,
     IMG_ERR_DIMENSIONS          = -8,   /* Invalid image dimensions                      */
     /* maybe used ? idk */
@@ -98,12 +98,12 @@ ImgError img_load(Image *img, const char* file); //
 ImgError img_loadpnm(Image *img, const char* file, ImgType type);//
 ImgError img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel); //
 ImgError img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel); //
-uint8_t img_savepnm(Image *img, const char *file);
-uint8_t img_save(Image img, const char *file);
-Image img_cpy(Image src);
+ImgError img_savepnm(Image *img, const char *file);
+ImgError img_save(Image *img, const char *file);
+Image img_cpy(Image *src);
 void img_free(Image img);
 void img_print(Image *img);
-int8_t img_disp(Image img, const char* custom_viewer);
+ImgError img_disp(Image *img, const char* custom_viewer);
 const char * img_strerror(char *buf, size_t sz , ImgError err);
 
 /*Image Processing Functions*/

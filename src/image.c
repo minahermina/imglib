@@ -65,16 +65,17 @@ struct error_entry {
 };
 
 static const struct error_entry error_entries[] = {
-    ERROR(IMG_OK,                   "Everything is okay!"),
-    ERROR(IMG_ERR_FILE_NOT_FOUND,   "File not found"),
-    ERROR(IMG_ERR_FILE_READ,        "Error reading the file"),
-    ERROR(IMG_ERR_FILE_WRITE,       "Error writing to the file"),
-    ERROR(IMG_ERR_INVALID_FORMAT,   "Invalid image format"),
-    ERROR(IMG_ERR_MEMORY,           "Memory allocation failed"),
-    ERROR(IMG_ERR_CORRUPT_DATA,     "Corrupted image data"),
-    ERROR(IMG_ERR_DIMENSIONS,       "Invalid image dimensions"),
-    ERROR(IMG_ERR_COLOR_SPACE,      "Unsupported or invalid color space"),
-    ERROR(IMG_ERR_UNKNOWN,          "Unknown error")
+    ERROR(IMG_OK,                     "Everything is okay!"),
+    ERROR(IMG_ERR_FILE_NOT_FOUND,     "File not found"),
+    ERROR(IMG_ERR_FILE_READ,          "Error reading from the file"),
+    ERROR(IMG_ERR_FILE_WRITE,         "Error writing to the file"),
+    ERROR(IMG_ERR_FILE_CREATE,        "Error creating the file"),
+    ERROR(IMG_ERR_UNSUPPORTED_FORMAT, "Unsupported image format"),
+    ERROR(IMG_ERR_MEMORY,             "Memory allocation failed"),
+    ERROR(IMG_ERR_CORRUPT_DATA,       "Corrupted image data"),
+    ERROR(IMG_ERR_DIMENSIONS,         "Invalid image dimensions"),
+    ERROR(IMG_ERR_COLOR_SPACE,        "Unsupported or invalid color space"),
+    ERROR(IMG_ERR_UNKNOWN,            "Unknown error")
 };
 
 static inline uint32_t
@@ -244,7 +245,7 @@ img_load(Image *img, const char* file)
             err = img_loadpnm(img, file, type);
             break;
         default:
-            err = IMG_ERR_INVALID_FORMAT;
+            err = IMG_ERR_UNSUPPORTED_FORMAT;
             return err;
     }
 
@@ -280,7 +281,7 @@ img_loadpnm(Image *img, const char* file, ImgType type)
             channels = 1;
             break;
         default:
-            err = IMG_ERR_INVALID_FORMAT;
+            err = IMG_ERR_UNSUPPORTED_FORMAT;
             return err;
     }
 
@@ -403,57 +404,66 @@ img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
 }
 
 Image
-img_cpy(Image src)
+img_cpy(Image *src)
 {
     Image img = {0};
 
-    IMG_CHECK_COND(src.data == NULL, img, IMG_ERR_NULL_DATA, img);
+    // IMG_CHECK_COND(src.data == NULL, img, IMG_ERR_NULL_DATA, img);
+    MUST(src != NULL, "src is NULL in img_cpy");
 
-    img = img_create(src.width, src.height, src.channels);
+    img = img_create(src->width, src->height, src->channels);
     if(img.status != IMG_OK){
         return img;
     }
-    img.type = src.type;
+    img.type = src->type;
 
-    memcpy(img.data, src.data, src.height * src.stride);
+    memcpy(img.data, src->data, src->height * src->stride);
 
     return img;
 }
 
-uint8_t
-img_save(Image img, const char *file)
+ImgError
+img_save(Image *img, const char *file)
 {
-    if(img.data == NULL || file == NULL || strlen(file) < 1)
-        return -1;
+    ImgError err;
+    MUST(img != NULL, "img is NULL in img_save");
+    MUST(file != NULL, "file is NULL in img_save");
 
-    switch (img.type) {
+    if(strlen(file) < 1){
+        err = IMG_ERR_INVALID_PARAMETERS;
+        return err;
+    }
+
+    switch (img->type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
         case IMG_PPM_ASCII:
         case IMG_PGM_ASCII:
         case IMG_PGM_BIN:
-            img_savepnm(&img , file);
+            err = img_savepnm(img , file);
             break;
         default:
-            fprintf(stderr, "Error: Unknown ImageType!\n(function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__); \
-            return -1;
+            err = IMG_ERR_UNSUPPORTED_FORMAT;
     }
-    return 1;
+    return err;
 }
 
-uint8_t
+ImgError
 img_savepnm(Image *img, const char *file)
 {
+    ImgError err;
     FILE *fp;
     uint32_t x, y;
     uint8_t *row, *pixel;
 
-    if(img == NULL){
-        return -1;
-    }
+    MUST(img != NULL, "img is NULL in img_savepnm");
+    MUST(file != NULL, "file is NULL in img_savepnm");
+
+    err = IMG_OK;
 
     fp = fopen(file, "wb");
     if(fp == NULL){
-        return -1;
+        err = IMG_ERR_FILE_READ;
+        return err;
     }
 
     // Write header
@@ -465,12 +475,13 @@ img_savepnm(Image *img, const char *file)
             pixel = &row[x * img->channels];
             if (fwrite(pixel, 1, img->channels, fp) != img->channels) {
                 fclose(fp);
-                return -1;
+                err = IMG_ERR_FILE_WRITE;
+                return err;
             }
         }
     }
     fclose(fp);
-    return 1;
+    return err;
 }
 
 void
@@ -520,29 +531,30 @@ img_print(Image *img)
 */
 
 
-int8_t
-img_disp(Image img, const char* imgviewer)
+ImgError
+img_disp(Image *img, const char* imgviewer)
 {
+    ImgError err;
     int fd;
     char template[] = "/tmp/img_XXXXXX", CMD[0xFF];
-
+    err = IMG_OK;
     printf("Using viewer command: '%s'\n", imgviewer);
 
     fd = mkstemp(template);
     if(fd == -1) {
-        fprintf(stderr, "Error creating temporary file\n");
-        return -1;
+        err = IMG_ERR_FILE_CREATE;
+        return err;
     }
 
     FILE* file = fdopen(fd, "w+");
     if(file == NULL) {
-        fprintf(stderr, "Error opening temporary image file\n");
         close(fd);
         unlink(template);
-        return -1;
+        err = IMG_ERR_FILE_READ;
+        return err;
     }
 
-    img_save(img, template);
+    err = img_save(img, template);
     sprintf(CMD, "%s %s", imgviewer, template);
     printf("Executing command: '%s'\n", CMD);
     system(CMD);
@@ -550,7 +562,7 @@ img_disp(Image img, const char* imgviewer)
     fclose(file);
     unlink(template);
 
-    return 0;
+    return err;
 }
 
 

@@ -48,6 +48,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
         return ret; \
     }
 
+#define MUST(condition, message) \
+    do { \
+        if (!(condition)) { \
+            fprintf(stderr, "Error: %s\n", (message)); \
+            assert(condition); \
+        } \
+    } while (0)
+
+
 #define ERROR(errcode, str)       {errcode, str}
 
 struct error_entry {
@@ -99,6 +108,42 @@ addpixel(Image *img, const uint8_t *pixel, uint32_t *current_pos)
     (*current_pos)++;
 
     return 1;
+}
+
+ImgError
+img_init(Image *img, uint16_t width, uint16_t height, uint8_t channels)
+{
+    ImgError err;
+
+    /*TODO: Extend channel support beyond the current 1-4 limit to accommodate additional color spaces:
+     * - LAB (3 channels)
+     * - CMYK (4 channels)
+     * - CMYKA (5 channels)
+     * - etc.
+     */
+    if(width == 0 || height == 0 || channels < 1 || channels > 4){
+        err = IMG_ERR_DIMENSIONS; goto error;
+    }
+
+    // img = (Image *) malloc(sizeof(Image));
+    // CHECK_ALLOC(img)
+
+    img->stride = calc_stride(width, channels);
+    img->data = (uint8_t*) malloc(height * img->stride);
+    if(img->data == NULL) {
+        err = IMG_ERR_MEMORY;  goto error;
+    }
+
+    memset(img->data, 0, height * img->stride);
+
+    img->width = width;
+    img->height = height;
+    img->channels = channels;
+    img->type = -1;
+
+    err = IMG_OK;
+error:
+    return err;
 }
 
 Image
@@ -174,44 +219,44 @@ img_type(const char *file)
     }
 }
 
-Image
-img_load(const char* file)
+ImgError
+img_load(Image *img, const char* file)
 {
-    Image img = {0};
-    FILE* f;
+    ImgError err;
+    FILE *f;
     ImgType type;
-    f = fopen(file, "r");
-    IMG_CHECK_COND(f == NULL, img, IMG_ERR_FILE_NOT_FOUND, img);
+    MUST(img != NULL, "img is NULL in img_load");
 
+    f = fopen(file, "r");
+
+    if (f == NULL){
+        err = IMG_ERR_FILE_NOT_FOUND;
+        return err;
+    }
+
+    err = IMG_OK;
     type = img_type(file);
     switch(type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
         case IMG_PPM_ASCII:
         case IMG_PGM_BIN:
         case IMG_PGM_ASCII:
-            img = img_loadpnm(file, type);
+            err = img_loadpnm(img, file, type);
             break;
         default:
-            img.status = IMG_ERR_INVALID_FORMAT;
-            fprintf(stderr, "Unsupported or invalid image format\n");
+            err = IMG_ERR_INVALID_FORMAT;
+            return err;
     }
 
-    return img;
+    return err;
 }
 
 
-
-
-
 /* TODO: Optimize this funciton*/
-Image
-img_loadpnm(const char* file, ImgType type)
+ImgError
+img_loadpnm(Image *img, const char* file, ImgType type)
 {
-    Image img = {0};
-    img.status = IMG_OK;
-    img.type = type;
-
-
+    ImgError err;
     ssize_t imgfile;
     FILE* tmp_file;
     uint8_t pixel[3], channels, ch, leftover[2] = {0}, leftover_size = 0;
@@ -220,7 +265,10 @@ img_loadpnm(const char* file, ImgType type)
     char line[MAXLINE], chunk[CHUNK_SIZE];
 
     tmp_file = fopen(file, "rb");
-    IMG_CHECK_COND(tmp_file  == NULL, img, IMG_ERR_FILE_NOT_FOUND, img);
+    if(tmp_file  == NULL){
+        err = IMG_ERR_FILE_NOT_FOUND;
+        return err;
+    } 
 
     switch(type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
@@ -230,32 +278,37 @@ img_loadpnm(const char* file, ImgType type)
         case IMG_PGM_BIN: /* FALLTHROUGH */
         case IMG_PGM_ASCII:
             channels = 1;
-            return img;
-        default:
             break;
+        default:
+            err = IMG_ERR_INVALID_FORMAT;
+            return err;
     }
 
     if (!fgets(line, sizeof(line), tmp_file)) {
         fclose(tmp_file);
-        img.status = IMG_ERR_FILE_READ;
-        return img;
+        err = IMG_ERR_FILE_READ;
+        return err;
     }  /* Read PNM magic number*/
 
     do {
         if (!fgets(line, sizeof(line), tmp_file)) {
-            fclose(tmp_file); return img;
+            fclose(tmp_file); 
+            err = IMG_ERR_FILE_READ;
+            return err;
         }
     } while (line[0] == '#'); /* Read width & height*/
 
     if (!sscanf(line, "%hu %hu", &w, &h) ) {
         fclose(tmp_file);
-        img.status = IMG_ERR_FILE_READ;
-        return img;
+        err = IMG_ERR_FILE_READ; 
+        return err;
     }
 
     do {
         if (!fgets(line, sizeof(line), tmp_file)) {
-            fclose(tmp_file); return img;
+            fclose(tmp_file);
+            err = IMG_ERR_FILE_READ;
+            return err;
         }
     } while (line[0] == '#'); /* Ignore depth info, typically 255*/
 
@@ -263,15 +316,18 @@ img_loadpnm(const char* file, ImgType type)
     fclose(tmp_file);
 
     imgfile = open(file, O_RDONLY);
-    IMG_CHECK_COND(imgfile < 0, img, IMG_ERR_FILE_READ, img);
+    if(imgfile < 0){
+        err = IMG_ERR_FILE_READ; 
+        return err;
+    } 
 
     lseek(imgfile, pos, SEEK_SET);
 
-    img = img_create(w, h, channels);
-    img.type = type;
-    if(img.status != IMG_OK) {
+    err = img_init(img, w, h, channels);
+    img->type = type;
+    if(err != IMG_OK) {
         close(imgfile);
-        return img;
+        return err;
     }
 
     while ((bytesread = read(imgfile, chunk, sizeof(chunk))) > 0) {
@@ -286,10 +342,10 @@ img_loadpnm(const char* file, ImgType type)
             for (ch = 0; ch < channels; ch++) {
                 pixel[ch] = chunk[i + ch];
             }
-            if (addpixel(&img, pixel, &curr_pos) < 0) {
+            if (addpixel(img, pixel, &curr_pos) < 0) {
                 close(imgfile);
-                img.status = IMG_ERR_CORRUPT_DATA;
-                return img;
+                err = IMG_ERR_CORRUPT_DATA; 
+                return err;
             }
         }
 
@@ -298,17 +354,22 @@ img_loadpnm(const char* file, ImgType type)
         memcpy(leftover, chunk + valid_bytes, leftover_size);
     }
     close(imgfile);
-    return img;
+
+    err = IMG_OK;
+    return err;
 }
 
-int8_t
+ImgError
 img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
+    ImgError err;
 
+    err = IMG_OK;
     if (img == NULL || pixel == NULL || x >= img->width || y >= img->height) {
         fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
-        return -1;
+        err = IMG_ERR_INVALID_PARAMETERS;
+        return err;
     }
 
     p = IMG_PIXEL_PTR(img, x, y);
@@ -319,13 +380,17 @@ img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
     return 1;
 }
 
-int8_t
+ImgError
 img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
 {
     uint8_t *p, i;
+    ImgError err;
+
+    err = IMG_OK;
     if (img == NULL || pixel == NULL || x >= img->width || y >= img->height) {
         fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
-        return -1;
+        err = IMG_ERR_INVALID_PARAMETERS;
+        return err;
     }
 
     p = IMG_PIXEL_PTR(img, x, y);
@@ -334,7 +399,7 @@ img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
         p[i] = MIN(255, pixel[i]);
     }
 
-    return 1;
+    return err;
 }
 
 Image

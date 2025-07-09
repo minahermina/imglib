@@ -92,18 +92,19 @@ typedef enum {
 } BorderMode;
 
 
-Image img_create(uint16_t width, uint16_t height, uint8_t channels);
-Image img_load(const char* file);
-Image img_loadpnm(const char* file, ImgType type);
-int8_t img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel);
-int8_t img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel);
+ImgError img_init(Image *img, uint16_t width, uint16_t height, uint8_t channels); /**/
+Image img_create(uint16_t width, uint16_t height, uint8_t channels);/*    */
+ImgError img_load(Image *img, const char* file); //
+ImgError img_loadpnm(Image *img, const char* file, ImgType type);//
+ImgError img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel); //
+ImgError img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel); //
 uint8_t img_savepnm(Image *img, const char *file);
 uint8_t img_save(Image img, const char *file);
 Image img_cpy(Image src);
 void img_free(Image img);
 void img_print(Image *img);
 int8_t img_disp(Image img, const char* custom_viewer);
-const char * img_strerror(char * buf, size_t sz , ImgError status);
+const char * img_strerror(char *buf, size_t sz , ImgError err);
 
 /*Image Processing Functions*/
 

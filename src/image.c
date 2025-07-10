@@ -178,18 +178,23 @@ img_create(uint16_t width, uint16_t height, uint8_t channels)
     return img;
 }
 
-ImgType
-img_type(const char *file)
+ImgError
+img_type(const char *file, ImgType *type)
 {
+    ImgError err;
     FILE* f;
     char magic[3] = {0};
     char line[MAXLINE];
 
-    f = fopen(file, "rb");
+    MUST(file != NULL, "file is NULL in img_type");
+    MUST(type != NULL, "type is NULL in img_type");
 
+    err = IMG_OK;
+
+    f = fopen(file, "rb");
     if(f == NULL){
-        fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__); \
-        return IMG_UNKNOWN;
+        err = IMG_ERR_FILE_NOT_FOUND;
+        return err;
     }
 
     while (fgets(line, MAXLINE, f) != NULL) {
@@ -208,16 +213,22 @@ img_type(const char *file)
 
     switch(magic_) {
         case IMG_PPM_BIN:
-            return IMG_PPM_BIN;
+            *type = IMG_PPM_BIN;
+            break;
         case IMG_PPM_ASCII:
-            return IMG_PPM_ASCII;
+            *type = IMG_PPM_ASCII;
+            break;
         case IMG_PGM_BIN:
-            return IMG_PGM_BIN;
+            *type = IMG_PGM_BIN;
+            break;
         case IMG_PGM_ASCII:
-            return IMG_PGM_ASCII;
+            *type = IMG_PGM_ASCII;
+            break;
         default:
-            return IMG_UNKNOWN;
+            *type =  IMG_UNKNOWN;
+            break;
     }
+    return err;
 }
 
 ImgError
@@ -228,15 +239,19 @@ img_load(Image *img, const char* file)
     ImgType type;
     MUST(img != NULL, "img is NULL in img_load");
 
-    f = fopen(file, "r");
+    err = IMG_OK;
 
+    f = fopen(file, "r");
     if (f == NULL){
         err = IMG_ERR_FILE_NOT_FOUND;
         return err;
     }
 
-    err = IMG_OK;
-    type = img_type(file);
+    err = img_type(file, &type);
+    if(err != IMG_OK){
+        return err;
+    }
+
     switch(type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
         case IMG_PPM_ASCII:

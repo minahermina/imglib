@@ -403,23 +403,38 @@ img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
     return err;
 }
 
-Image
-img_cpy(Image *src)
+ImgError
+img_cpy(Image *dest, Image *src)
 {
-    Image img = {0};
+    ImgError err;
 
-    // IMG_CHECK_COND(src.data == NULL, img, IMG_ERR_NULL_DATA, img);
-    MUST(src != NULL, "src is NULL in img_cpy");
+    MUST(dest != NULL, "dest is NULL in img_cpy");
+    MUST(src  != NULL, "src is NULL in img_cpy");
+    MUST(src->data  != NULL, "src->data is NULL in img_cpy");
 
-    img = img_create(src->width, src->height, src->channels);
-    if(img.status != IMG_OK){
-        return img;
+    err = IMG_OK;
+    /* Check if destination has compatible dimensions and channels */
+    if (dest->width != src->width || 
+        dest->height != src->height || 
+        dest->channels != src->channels) {
+
+        if (dest->data != NULL) {
+            free(dest->data);
+        }
+
+        // Reinitialize destination with source dimensions
+        err = img_init(dest, src->width, src->height, src->channels);
+        if (err != IMG_OK) {
+            return err;
+        }
     }
-    img.type = src->type;
 
-    memcpy(img.data, src->data, src->height * src->stride);
+    dest->type = src->type;
 
-    return img;
+    // Copy image data
+    memcpy(dest->data, src->data, src->height * src->stride);
+
+    return err;
 }
 
 ImgError

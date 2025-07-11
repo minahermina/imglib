@@ -1018,51 +1018,50 @@ img_add(Image *dest, Image *img1, Image *img2)
     TODO: implement multiple subtraction methods (direct subtraction, absolute difference, and wrapped values)
     and allow the user to select their preferred method
 */
-Image
-img_subtract(Image img1, Image img2)
+ImgError
+img_subtract(Image *dest, Image *img1, Image *img2)
 {
-    Image img = {0};
-    uint16_t x, y, width, height, diff;
-    uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
+    ImgError err;
+    uint16_t x, y, width, height;
+    uint8_t ch, diff, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
 
+    MUST(img1       != NULL, "img1 is NULL in img_add");
+    MUST(img2       != NULL, "img1 is NULL in img_add");
+    MUST(img1->data != NULL, "img1->data is NULL in img_add");
+    MUST(img2->data != NULL, "img1->data is NULL in img_add");
+    MUST(dest       != NULL, "dest is NULL in img_add");
 
-    if(img1.data == NULL || img2.data == NULL){
-        img.status = IMG_ERR_INVALID_PARAMETERS;
-        return img;
-    }
-
-    if(img1.width != img2.width       ||
-       img1.height != img2.height     ||
-       img1.channels != img2.channels ||
-       img1.type != img2.type
+    err = IMG_OK;
+    if(img1->width != img2->width       ||
+       img1->height != img2->height     ||
+       img1->channels != img2->channels ||
+       img1->type != img2->type
     ){
-        img.status = IMG_ERR_INVALID_PARAMETERS;
-        return img;
+        err = IMG_ERR_INVALID_DIMENSIONS;
+        return err;
     }
 
-    width = img1.width;
-    height = img1.height;
-    channels = img1.channels;
+    width = img1->width;
+    height = img1->height;
+    channels = img1->channels;
 
-    img = img_create(width, height, channels);
-    img.type = img1.type;
-    if(img.status != IMG_OK){
-        return img;
+    err = img_realloc_pixels(dest, width, height, channels);
+    dest->type = img1->type;
+    if(err != IMG_OK){
+        return err;
     }
+
 
     for(y = 0; y < height; ++y){
         for(x = 0; x < width; ++x){
-            img_getpx(&img1, x, y, pixel1);
-            img_getpx(&img2, x, y, pixel2);
+            img_getpx(img1, x, y, pixel1);
+            img_getpx(img2, x, y, pixel2);
             for(ch = 0; ch < channels; ++ch){
                 diff = pixel1[ch] - pixel2[ch];
                 pixel2[ch] = MAX(0, diff);
             }
-            img_setpx(&img, x, y, pixel2);
+            img_setpx(dest, x, y, pixel2);
         }
     }
-    return img;
+    return err;
 }
-
-
-

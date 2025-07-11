@@ -113,6 +113,32 @@ addpixel(Image *img, const uint8_t *pixel, uint32_t *current_pos)
 }
 
 ImgError
+img_realloc_pixels(Image *img, uint16_t new_width, uint16_t new_height, uint8_t new_channels)
+{
+    ImgError err;
+    MUST(img != NULL, "img is NULL in img_realloc_pixels");
+
+    err = IMG_OK;
+    if(new_width < 1 || new_height < 1 || new_channels < 1 || new_channels > 4){
+        err = IMG_ERR_INVALID_DIMENSIONS;
+        return err;
+    }
+
+
+    img->stride = calc_stride(new_width, new_channels);
+    img->data = (uint8_t*) realloc(img->data, new_height * img->stride);
+    MUST(img->data != NULL, "img->data is NULL in img_realloc_pixels");
+
+    memset(img->data, 0, new_height * img->stride);
+
+    img->width = new_width;
+    img->height = new_height;
+    img->channels = new_channels;
+
+    return err;
+}
+
+ImgError
 img_init(Image *img, uint16_t width, uint16_t height, uint8_t channels)
 {
     ImgError err;
@@ -826,44 +852,33 @@ void img_convolve(Image *img, Kernel kernel, BorderMode border_mode)
     free(orig_data);
 }
 
-Image *
-img_rgb2gray(Image *img)
+ImgError
+img_rgb2gray(Image *dest, Image *img)
 {
-    Image *newimg;
+    ImgError err;
     uint16_t x,y;
     uint8_t pixel[4] = {0, 0, 0, 0}, newpixel[1] = {0};
 
-    if(img == NULL){
-        fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
+    MUST(dest      != NULL, "dest is NULL in img_rgb2gray");
+    MUST(img       != NULL, "img is NULL in img_rgb2gray");
+    MUST(img->data != NULL, "img->data is NULL in img_rgb2gray");
+
+    err = img_realloc_pixels(dest, img->width, img->height, 1);
+    if(err != IMG_OK){
+        return err;
     }
 
-
-    newimg = (Image *) malloc(sizeof(Image));
-    if(newimg == NULL){
-        fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
-    }
-
-    newimg->width = img->width;
-    newimg->height = img->height;
-    newimg->channels = 1;
-    newimg->type = IMG_PGM_BIN;
-    newimg->stride = calc_stride(newimg->width , 1);
-    newimg->data = (uint8_t*) malloc(newimg->height * newimg->stride);
-
-    if(newimg->data == NULL){
-        fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
-    }
-
-    for(x = 0; x < newimg->width; ++x) {
-        for(y = 0; y < newimg->height; ++y) {
+    dest->type = IMG_PGM_BIN;
+    for(x = 0; x < dest->width; ++x) {
+        for(y = 0; y < dest->height; ++y) {
             img_getpx(img, x, y, pixel);
             /* refernce for the formula: https://poynton.ca/PDFs/ColorFAQ.pdf */
             newpixel[0] = 0.2125 * pixel[0] + 0.7154 * pixel[1] + 0.0721 * pixel[2];
-            img_setpx(newimg, x, y, newpixel);
+            img_setpx(dest, x, y, newpixel);
         }
     }
 
-    return newimg;
+    return err;
 }
 
 /* TODO: Find an efficient implementation for this cubic kernel */
@@ -879,31 +894,6 @@ cubic_kernel(float x)
     return 0.0f;
 }
 
-ImgError
-img_realloc_pixels(Image *img, uint16_t new_width, uint16_t new_height, uint8_t new_channels)
-{
-    ImgError err;
-    MUST(img != NULL, "img is NULL in img_realloc_pixels");
-
-    err = IMG_OK;
-    if(new_width < 1 || new_height < 1 || new_channels < 1 || new_channels > 4){
-        err = IMG_ERR_INVALID_DIMENSIONS;
-        return err;
-    }
-
-
-    img->stride = calc_stride(new_width, new_channels);
-    img->data = (uint8_t*) realloc(img->data, new_height * img->stride);
-    MUST(img->data != NULL, "img->data is NULL in img_realloc_pixels");
-
-    memset(img->data, 0, new_height * img->stride);
-
-    img->width = new_width;
-    img->height = new_height;
-    img->channels = new_channels;
-
-    return err;
-}
 
 /*
     resize Using Bicubic Interpolation

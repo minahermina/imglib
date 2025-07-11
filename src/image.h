@@ -115,9 +115,9 @@ void img_print_kernel(Kernel kernel);
 void img_free_kernel(Kernel kernel);
 /* ------------------------------------*/
 void img_convolve(Image *img, Kernel kernel, BorderMode border_mode);
-Image *img_rgb2gray(Image *img);
+ImgError img_rgb2gray(Image *dest, Image *img);
 ImgError img_resize(Image *dest, Image *src, uint16_t new_width, uint16_t new_height); //
-ImgError img_add(Image *dest, Image *img1, Image *img2);
-ImgError img_subtract(Image *dest, Image *img1, Image *img2);
+ImgError img_add(Image *dest, Image *img1, Image *img2); //
+ImgError img_subtract(Image *dest, Image *img1, Image *img2); //
 
 #endif

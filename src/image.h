@@ -61,10 +61,12 @@ typedef enum {
     IMG_ERR_MEMORY              = -6,   /* Memory allocation failed                      */
     IMG_ERR_INVALID_PARAMETERS  = -7,
     IMG_ERR_INVALID_DIMENSIONS  = -8,   /* Invalid dimensions passed                      */
+    IMG_ERR_INVALID_KERNEL_SIZE = -9,   /* Invalid dimensions passed                      */
+    IMG_ERR_UNSUPPORTED_KERNEL  = -10,   /* Invalid dimensions passed                      */
     /* maybe used ? idk */
-    IMG_ERR_COLOR_SPACE         = -9,   /* Unsupported or invalid color space            */
-    IMG_ERR_CORRUPT_DATA        = -10,   /* The image data is corrupted                   */
-    IMG_ERR_UNKNOWN             = -11    /* Unknown error                                 */
+    IMG_ERR_COLOR_SPACE         = -11,   /* Unsupported or invalid color space            */
+    IMG_ERR_CORRUPT_DATA        = -12,   /* The image data is corrupted                   */
+    IMG_ERR_UNKNOWN             = -13    /* Unknown error                                 */
 } ImgError;
 
 typedef struct {
@@ -92,16 +94,16 @@ typedef enum {
 } BorderMode;
 
 
-ImgError img_init(Image *img, uint16_t width, uint16_t height, uint8_t channels); /**/
-Image img_create(uint16_t width, uint16_t height, uint8_t channels);/*    */
-ImgError img_load(Image *img, const char* file); //
-ImgError img_loadpnm(Image *img, const char* file, ImgType type);//
-ImgError img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel); //
-ImgError img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel); //
-ImgError img_savepnm(Image *img, const char *file); //
-ImgError img_save(Image *img, const char *file); //
+ImgError img_init(Image *img, uint16_t width, uint16_t height, uint8_t channels);
+Image img_create(uint16_t width, uint16_t height, uint8_t channels);
+ImgError img_load(Image *img, const char* file);
+ImgError img_loadpnm(Image *img, const char* file, ImgType type);
+ImgError img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel);
+ImgError img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel);
+ImgError img_savepnm(Image *img, const char *file);
+ImgError img_save(Image *img, const char *file);
 ImgError img_cpy(Image *dest, Image *src);
-void img_free(Image img);
+void img_free(Image *img);
 void img_print(Image *img);
 ImgError img_disp(Image *img, const char* custom_viewer);
 const char *img_strerror(char *buf, size_t sz , ImgError err);
@@ -109,15 +111,15 @@ const char *img_strerror(char *buf, size_t sz , ImgError err);
 /*Image Processing Functions*/
 
 /* ----------- Kernel stuff----------- */
-Kernel img_get_kernel(KernelType type, KernelSize size);
-int8_t img_filter2D(Image *img, KernelType type, KernelSize size, BorderMode border_mode);
+ImgError img_get_kernel(KernelType type, KernelSize size, Kernel *kernel);
+ImgError img_filter2D(Image *dest, Image *img, KernelType type, KernelSize size, BorderMode border_mode);
 void img_print_kernel(Kernel kernel);
 void img_free_kernel(Kernel kernel);
 /* ------------------------------------*/
-void img_convolve(Image *img, Kernel kernel, BorderMode border_mode);
+ImgError img_convolve(Image *dest, Image *img, Kernel *kernel, BorderMode border_mode);
 ImgError img_rgb2gray(Image *dest, Image *img);
-ImgError img_resize(Image *dest, Image *src, uint16_t new_width, uint16_t new_height); //
-ImgError img_add(Image *dest, Image *img1, Image *img2); //
-ImgError img_subtract(Image *dest, Image *img1, Image *img2); //
+ImgError img_resize(Image *dest, Image *src, uint16_t new_width, uint16_t new_height);
+ImgError img_add(Image *dest, Image *img1, Image *img2);
+ImgError img_subtract(Image *dest, Image *img1, Image *img2);
 
 #endif

@@ -65,18 +65,20 @@ struct error_entry {
 };
 
 static const struct error_entry error_entries[] = {
-    ERROR(IMG_OK,                     "Everything is okay!"),
-    ERROR(IMG_ERR_FILE_NOT_FOUND,     "File not found"),
-    ERROR(IMG_ERR_FILE_READ,          "Error reading from the file"),
-    ERROR(IMG_ERR_FILE_WRITE,         "Error writing to the file"),
-    ERROR(IMG_ERR_FILE_CREATE,        "Error creating the file"),
-    ERROR(IMG_ERR_UNSUPPORTED_FORMAT, "Unsupported image format"),
-    ERROR(IMG_ERR_MEMORY,             "Memory allocation failed"),
-    ERROR(IMG_ERR_INVALID_PARAMETERS, "Parameters passed to the functions are invalid"),
-    ERROR(IMG_ERR_CORRUPT_DATA,       "Corrupted image data"),
-    ERROR(IMG_ERR_INVALID_DIMENSIONS,         "Invalid dimensions passed"),
-    ERROR(IMG_ERR_COLOR_SPACE,        "Unsupported or invalid color space"),
-    ERROR(IMG_ERR_UNKNOWN,            "Unknown error")
+    ERROR(IMG_OK,                      "Everything is okay!"),
+    ERROR(IMG_ERR_FILE_NOT_FOUND,      "File not found"),
+    ERROR(IMG_ERR_FILE_READ,           "Error reading from the file"),
+    ERROR(IMG_ERR_FILE_WRITE,          "Error writing to the file"),
+    ERROR(IMG_ERR_FILE_CREATE,         "Error creating the file"),
+    ERROR(IMG_ERR_UNSUPPORTED_FORMAT,  "Unsupported image format"),
+    ERROR(IMG_ERR_MEMORY,              "Memory allocation failed"),
+    ERROR(IMG_ERR_INVALID_PARAMETERS,  "Parameters passed to the functions are invalid"),
+    ERROR(IMG_ERR_INVALID_DIMENSIONS,  "Invalid dimensions passed"),
+    ERROR(IMG_ERR_INVALID_KERNEL_SIZE, "Invalid kernel size"),
+    ERROR(IMG_ERR_UNSUPPORTED_KERNEL,  "Unsupported Kernel type"),
+    ERROR(IMG_ERR_CORRUPT_DATA,        "Corrupted image data"),
+    ERROR(IMG_ERR_COLOR_SPACE,         "Unsupported or invalid color space"),
+    ERROR(IMG_ERR_UNKNOWN,             "Unknown error")
 };
 
 static inline uint32_t
@@ -542,14 +544,12 @@ img_savepnm(Image *img, const char *file)
 }
 
 void
-img_free(Image img)
+img_free(Image *img)
 {
-    if(img.data == NULL) {
-        fprintf(stderr, "img is NULL!");
-        return;
-    }
+    MUST(img       != NULL, "img is NULL in img_free");
+    MUST(img->data != NULL, "img->data is NULL in img_free");
 
-    free(img.data);
+    free(img->data);
 }
 
 void
@@ -557,10 +557,8 @@ img_print(Image *img)
 {
     uint16_t i, j, k;
     uint8_t pixel[] = {0, 0, 0, 0};
-    if (img == NULL) {
-        fprintf(stderr, "img is NULL!");
-        return;
-    }
+    MUST(img       != NULL, "img is NULL in img_print");
+    MUST(img->data != NULL, "img->data is NULL in img_print");
 
     for(i = 0; i < img->height; i++) {
         for(j = 0; j < img->width; j++) {
@@ -612,6 +610,10 @@ img_disp(Image *img, const char* imgviewer)
     }
 
     err = img_save(img, template);
+    if(err != IMG_OK){
+        return err;
+    }
+
     sprintf(CMD, "%s %s", imgviewer, template);
     printf("Executing command: '%s'\n", CMD);
     system(CMD);
@@ -637,17 +639,24 @@ img_strerror(char *buf, size_t sz, ImgError status)
     return buf;
 }
 
-Kernel kernel_alloc(KernelSize sz){
-    Kernel kernel = {0};
-    kernel.size = sz;
-    kernel.data = (float*) malloc(kernel.size * kernel.size * sizeof(float));
-    KERNEL_ASSERT(kernel);
-    return kernel;
+ImgError 
+kernel_alloc(KernelSize sz, Kernel *kernel)
+{
+    ImgError err;
+    MUST(kernel != NULL, "kernel is NULL in kernel_alloc");
+
+    err = IMG_OK;
+    kernel->size = sz;
+
+    kernel->data = (float*) malloc(kernel->size * kernel->size * sizeof(float));
+    MUST(kernel->data != NULL, "kernel->data is NULL in kernel_alloc");
+    return err;
 }
 
-Kernel
-img_get_kernel(KernelType type, KernelSize size)
+ImgError
+img_get_kernel(KernelType type, KernelSize size, Kernel *kernel)
 {
+    ImgError err;
     const float sobel_x[] = {
         -1.0f, 0.0f, 1.0f,
         -2.0f, 0.0f, 2.0f,
@@ -664,24 +673,25 @@ img_get_kernel(KernelType type, KernelSize size)
         0.0f, -1.0f, 0.0f
     };
 
-
-
-    Kernel kernel = {0};
     float size_squared = size * size;
     size_t i, center = (size_t)size_squared/2;
+    err = IMG_OK;
 
-    kernel = kernel_alloc(size);
+    err = kernel_alloc(size, kernel);
+    if(err != IMG_OK){
+        return err;
+    }
     switch(type) {
         case IMG_KERNEL_IDENTITY:
 
-            memset(kernel.data, 0, size_squared * sizeof(float));
-            kernel.data[center] = 1.0f;
+            memset(kernel->data, 0, size_squared * sizeof(float));
+            kernel->data[center] = 1.0f;
             break;
 
         case IMG_KERNEL_BOX_BLUR:
 
             for (i = 0; i < (size_squared); i++) {
-                kernel.data[i] = 1.0f / size_squared ;
+                kernel->data[i] = 1.0f / size_squared ;
             }
             break;
 
@@ -691,60 +701,63 @@ img_get_kernel(KernelType type, KernelSize size)
             /*TODO: implement a generalized funciton that creates a sharpen kernel of custom size n */
 
             /*May be replaced by fill_kernel util ?, i don't know*/
-            memcpy(kernel.data, sharpen, size_squared * sizeof(float));
+            memcpy(kernel->data, sharpen, size_squared * sizeof(float));
             break;
 
         case IMG_KERNEL_SOBEL_X:
 
-            memcpy(kernel.data, sobel_x, size_squared * sizeof(float));
+            memcpy(kernel->data, sobel_x, size_squared * sizeof(float));
             break;
 
         case IMG_KERNEL_SOBEL_Y:
 
-            memcpy(kernel.data, sobel_y, size_squared * sizeof(float));
+            memcpy(kernel->data, sobel_y, size_squared * sizeof(float));
             break;
 
         case IMG_KERNEL_LAPLACIAN:
             /*TODO: implement a funciton that creates a laplacian kernel of custom size n */
-            assert(size != IMG_KERNEL_3x3);
+            assert(size == IMG_KERNEL_3x3);
 
             float laplacian[] = {
                 0.0f,  1.0f, 0.0f,
                 1.0f, -4.0f, 1.0f,
                 0.0f,  1.0f, 0.0f
             };
-            memcpy(kernel.data, laplacian, size_squared * sizeof(float));
+            memcpy(kernel->data, laplacian, size_squared * sizeof(float));
             break;
 
         case IMG_KERNEL_GAUSSIAN_BLUR:
             /*TODO: implement the gaussian formula */
         default:
-            fprintf(stderr, "Unknown kernel type\n");
-            kernel.size = 0;
-            kernel.data = NULL;
+            err = IMG_ERR_MEMORY;
+            break;
     }
 
-    return kernel;
+    return err;
 }
 
-int8_t
-img_filter2D(Image *img, KernelType type, KernelSize size, BorderMode border_mode)
+ImgError
+img_filter2D(Image *dest, Image *img, KernelType type, KernelSize size, BorderMode border_mode)
 {
-    if(img == NULL){
-        return -1;
+    ImgError err;
+    Kernel kernel = {0};
+    MUST(img       != NULL, "img is NULL in img_filter2D");
+    MUST(img->data != NULL, "img->data is NULL in img_filter2D");
+    MUST(dest      != NULL, "dest is NULL in img_filter2D");
+
+    err = img_get_kernel(type, size, &kernel);
+    if (err != IMG_OK) {
+        return err;
     }
 
-    Kernel kernel = img_get_kernel(type, size);
-    if (kernel.data == NULL || kernel.size == 0) {
-        fprintf(stderr, "Failed to create kernel\n");
-        return -1;
+    err = img_convolve(dest, img, &kernel, border_mode);
+    if (err != IMG_OK) {
+        return err;
     }
-
-    img_convolve(img, kernel, border_mode);
 
     img_free_kernel(kernel);
 
-    return 1;
+    return err;
 }
 
 void
@@ -775,8 +788,10 @@ img_free_kernel(Kernel kernel)
 /* TODO: This is probably the worst implementation ever.
    Many things can be handled more efficiently.
 */
-void img_convolve(Image *img, Kernel kernel, BorderMode border_mode)
+ImgError 
+img_convolve(Image *dest, Image *img, Kernel *kernel, BorderMode border_mode)
 {
+    ImgError err;
     uint8_t channels, *p;
     uint16_t x, y, half_kernel;
     int16_t kx, ky, px , py;
@@ -784,24 +799,22 @@ void img_convolve(Image *img, Kernel kernel, BorderMode border_mode)
     float kernel_val;
     uint32_t offset;
 
-    if(!img || !img->data || kernel.data == NULL|| kernel.size % 2 == 0) {
-        img->status = IMG_ERR_INVALID_PARAMETERS;
-        return;
-    }
+    MUST(img             != NULL, "img is NULL in img_convolve");
+    MUST(img->data       != NULL, "img->data is NULL in img_convolve");
+    MUST(kernel->data     != NULL, "kernel->data is NULL in img_convolve");
+    MUST(kernel->size % 2 != 0,    "kernel->size % 2 == 0 NULL in img_convolve");
 
-    half_kernel = kernel.size /2;
+    err = IMG_OK;
+    half_kernel = kernel->size /2;
     channels = img->channels;
-    // Create a copy of the original image data for reference
-    uint8_t *orig_data = (uint8_t *)malloc(img->height * img->stride);
-    if(orig_data == NULL){
-        img->status = IMG_ERR_MEMORY;
-        return;
+
+    err = img_cpy(dest, img);
+    if(err != IMG_OK){
+        return err;
     }
 
-    memcpy(orig_data, img->data, img->height * img->stride);
-
-    for (y = 0; y < img->height; y++) {
-        for (x = 0; x < img->width; x++) {
+    for (y = 0; y < dest->height; y++) {
+        for (x = 0; x < dest->width; x++) {
             sum_r = 0.0, sum_g = 0.0, sum_b = 0.0;
 
             for (ky = -half_kernel; ky <= half_kernel; ky++) {
@@ -809,25 +822,25 @@ void img_convolve(Image *img, Kernel kernel, BorderMode border_mode)
                     px = x + kx;
                     py = y + ky;
 
-                    if (px < 0 || px >= img->width || py < 0 || py >= img->height) {
+                    if (px < 0 || px >= dest->width || py < 0 || py >= dest->height) {
                         switch(border_mode) {
                             case IMG_BORDER_ZERO_PADDING:
                                 continue;
                             case IMG_BORDER_REPLICATE:
-                                px = MIN(MAX(px, 0), img->width - 1);
-                                py = MIN(MAX(py, 0), img->height - 1);
+                                px = MIN(MAX(px, 0), dest->width - 1);
+                                py = MIN(MAX(py, 0), dest->height - 1);
                         }
                     }
 
                     // Get kernel value
-                    kernel_val = kernel.data[(ky + half_kernel) * kernel.size + (kx + half_kernel)];
+                    kernel_val = kernel->data[(ky + half_kernel) * kernel->size + (kx + half_kernel)];
 
-                    // Get pixel from the original image copy
-                    offset = py * img->stride + px * channels;
-                    sum_r += orig_data[offset] * kernel_val;
+                    // Get pixel from the img
+                    offset = py * dest->stride + px * channels;
+                    sum_r += img->data[offset] * kernel_val;
                     if(channels == 3){
-                        sum_g += orig_data[offset + 1] * kernel_val;
-                        sum_b += orig_data[offset + 2] * kernel_val;
+                        sum_g += img->data[offset + 1] * kernel_val;
+                        sum_b += img->data[offset + 2] * kernel_val;
                     }
                 }
             }
@@ -839,7 +852,7 @@ void img_convolve(Image *img, Kernel kernel, BorderMode border_mode)
             }
 
             // Write output directly to the image
-            p = IMG_PIXEL_PTR(img, x, y);
+            p = IMG_PIXEL_PTR(dest, x, y);
             p[0] = (uint8_t)sum_r;
             if(channels == 3){
                 p[1] = (uint8_t)sum_g;
@@ -847,9 +860,7 @@ void img_convolve(Image *img, Kernel kernel, BorderMode border_mode)
             }
         }
     }
-
-    // Free the reference copy
-    free(orig_data);
+    return err;
 }
 
 ImgError

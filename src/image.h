@@ -98,13 +98,13 @@ ImgError img_load(Image *img, const char* file); //
 ImgError img_loadpnm(Image *img, const char* file, ImgType type);//
 ImgError img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel); //
 ImgError img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel); //
-ImgError img_savepnm(Image *img, const char *file);
-ImgError img_save(Image *img, const char *file);
-Image img_cpy(Image *src);
+ImgError img_savepnm(Image *img, const char *file); //
+ImgError img_save(Image *img, const char *file); //
+ImgError img_cpy(Image *dest, Image *src);
 void img_free(Image img);
 void img_print(Image *img);
 ImgError img_disp(Image *img, const char* custom_viewer);
-const char * img_strerror(char *buf, size_t sz , ImgError err);
+const char *img_strerror(char *buf, size_t sz , ImgError err);
 
 /*Image Processing Functions*/
 
@@ -116,7 +116,7 @@ void img_free_kernel(Kernel kernel);
 /* ------------------------------------*/
 void img_convolve(Image *img, Kernel kernel, BorderMode border_mode);
 Image *img_rgb2gray(Image *img);
-Image img_resize(Image src, uint16_t new_width, uint16_t new_height);
+ImgError img_resize(Image *dest, Image *src, uint16_t new_width, uint16_t new_height); //
 Image img_add(Image img1, Image img2);
 Image img_subtract(Image img1, Image img2);
 

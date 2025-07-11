@@ -878,34 +878,60 @@ cubic_kernel(float x)
     return 0.0f;
 }
 
+ImgError
+img_realloc_pixels(Image *img, uint16_t new_width, uint16_t new_height, uint8_t new_channels)
+{
+    ImgError err;
+    MUST(img != NULL, "img is NULL in img_realloc_pixels");
+
+    err = IMG_OK;
+    if(new_width < 1 || new_height < 1 || new_channels < 1 || new_channels > 4){
+        err = IMG_ERR_DIMENSIONS;
+        return err;
+    }
+
+
+    img->stride = calc_stride(new_width, new_channels);
+    img->data = (uint8_t*) realloc(img->data, new_height * img->stride);
+    MUST(img->data != NULL, "img->data is NULL in img_realloc_pixels");
+
+    memset(img->data, 0, new_height * img->stride);
+
+    img->width = new_width;
+    img->height = new_height;
+    img->channels = new_channels;
+
+    return err;
+}
+
 /*
     resize Using Bicubic Interpolation
     Reference: https://iopscience.iop.org/article/10.1088/1742-6596/1114/1/012066
 */
 /* TODO: Optimize redundant calculations and memory access */
-Image
-img_resize(Image src, uint16_t new_width, uint16_t new_height)
+ImgError
+img_resize(Image *dest, Image *src, uint16_t new_width, uint16_t new_height)
 {
-    Image img = {0};
+    ImgError err;
     float scale_x, scale_y, src_x, src_y, value;
     int ix, iy, c, n, m;
     uint16_t  x, y;
     uint8_t pixel[3] = {0}, spixel[3];
-    if(src.status != IMG_OK){
-        img.status = IMG_ERR_UNKNOWN;
-        return img;
+
+    err = IMG_OK;
+    MUST(dest != NULL, "dest is NULL in img_resize");
+    MUST(src  != NULL, "src is NULL in img_resize");
+
+    if(new_width < 1 || new_height < 1){
+        err = IMG_ERR_INVALID_PARAMETERS;
+        return err;
     }
 
+    err = img_realloc_pixels(dest, new_width, new_height, src->channels);
+    dest->type = src->type;
 
-
-    img = img_create(new_width, new_height, src.channels);
-    img.type = src.type;
-    if(img.status != IMG_OK){
-        return img;
-    }
-
-    scale_x = (float)src.width / new_width;
-    scale_y = (float)src.height / new_height;
+    scale_x = (float)src->width / new_width;
+    scale_y = (float)src->height / new_height;
 
     for (y = 0; y < new_height; y++) {
         for (x = 0; x < new_width; x++) {
@@ -914,7 +940,7 @@ img_resize(Image src, uint16_t new_width, uint16_t new_height)
             ix = (int)FLOOR(src_x);
             iy = (int)FLOOR(src_y);
 
-            for (c = 0; c < src.channels; c++) {
+            for (c = 0; c < src->channels; c++) {
                 value = 0.0f;
                 for (m = -1; m <= 2; m++) {
                     for (n = -1; n <= 2; n++) {
@@ -922,19 +948,19 @@ img_resize(Image src, uint16_t new_width, uint16_t new_height)
                         int sy = iy + m;
                         if (sx < 0) sx = 0;
                         if (sy < 0) sy = 0;
-                        sx = (sx >= src.width ? src.width - 1 : sx);
-                        sy = (sy >= src.height ? src.height - 1 : sy);
+                        sx = (sx >= src->width ? src->width - 1 : sx);
+                        sy = (sy >= src->height ? src->height - 1 : sy);
 
-                        img_getpx(&src, sx, sy, spixel);
+                        img_getpx(src, sx, sy, spixel);
                         value += spixel[c] * cubic_kernel(n - (src_x - ix)) * cubic_kernel(m - (src_y - iy));
                     }
                 }
                 pixel[c] = MIN(MAX(value, 0), 255);
             }
-            img_setpx(&img, x, y, pixel);
+            img_setpx(dest, x, y, pixel);
         }
     }
-    return img;
+    return err;
 }
 
 

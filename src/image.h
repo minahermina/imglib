@@ -113,8 +113,8 @@ const char *img_strerror(char *buf, size_t sz , ImgError err);
 /* ----------- Kernel stuff----------- */
 ImgError img_get_kernel(KernelType type, KernelSize size, Kernel *kernel);
 ImgError img_filter2D(Image *dest, Image *img, KernelType type, KernelSize size, BorderMode border_mode);
-void img_print_kernel(Kernel kernel);
-void img_free_kernel(Kernel kernel);
+ImgError img_print_kernel(Kernel *kernel);
+void img_free_kernel(Kernel *kernel);
 /* ------------------------------------*/
 ImgError img_convolve(Image *dest, Image *img, Kernel *kernel, BorderMode border_mode);
 ImgError img_rgb2gray(Image *dest, Image *img);

@@ -37,7 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define IMG_PIXEL_PTR(img, x, y)  ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
 #define IMG_ARR_SIZE(x)           (sizeof(x) / sizeof((x)[0]))
 #define VAR(var)                  fprintf(stderr, "[DEBUG] %s = %d\n", #var, (var))
-#define KERNEL_ASSERT(x)          assert((x).data != NULL)
 /* TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
 #define HEX_TO_ASCII(hex)         (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
 #define IMG_CHECK_COND(ex, img, errcode, ret) \
@@ -755,34 +754,39 @@ img_filter2D(Image *dest, Image *img, KernelType type, KernelSize size, BorderMo
         return err;
     }
 
-    img_free_kernel(kernel);
+    img_free_kernel(&kernel);
 
     return err;
 }
 
-void
-img_print_kernel(Kernel kernel)
+ImgError
+img_print_kernel(Kernel *kernel)
 {
-    KERNEL_ASSERT(kernel);
+    ImgError err;
+    MUST(kernel       != NULL, "kernel is NULL in img_print_kernel");
+    MUST(kernel->data != NULL, "kernel is NULL in img_print_kernel");
 
-    for (int i = 0; i < kernel.size; i++) {
-        for (int j = 0; j < kernel.size; j++) {
-            printf("%6.2f ", kernel.data[i * kernel.size + j]);
+    err = IMG_OK;
+    for (int i = 0; i < kernel->size; i++) {
+        for (int j = 0; j < kernel->size; j++) {
+            printf("%6.2f ", kernel->data[i * kernel->size + j]);
         }
         printf("\n");
     }
+    return err;
 }
 
 
 
 void
-img_free_kernel(Kernel kernel)
+img_free_kernel(Kernel *kernel)
 {
-    if (kernel.data) {
-        free(kernel.data);
-        kernel.data = NULL;
-        kernel.size = 0;
-    }
+    MUST(kernel       != NULL, "kernel is NULL in img_free_kernel");
+    MUST(kernel->data != NULL, "kernel is NULL in img_free_kernel");
+
+    free(kernel->data);
+    kernel->data = NULL;
+    kernel->size = 0;
 }
 
 /* TODO: This is probably the worst implementation ever.

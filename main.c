@@ -6,21 +6,58 @@
 int 
 main(int argc, char const *argv[]) 
 {
-    const char *out_file;
-    uint16_t x, y;
+    ImgError err ;
+    const char *filename;
 
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <image_file>\n", argv[0]);
         return 1;
     }
 
-    ImagePtr img = img_load(argv[1]);
-    if (img == NULL) {
-        fprintf(stderr, "Failed to load image: %s\n", argv[1]);
+    filename = argv[1];
+    Image img = {0}, img2 = {0};
+
+    err = img_load(&img, filename);
+    if (err != IMG_OK) {
+        fprintf(stderr, "Failed to load image due: %s\n", img_err2str(err));
+        return 1;
+    }
+    
+    img_cpy(&img2, &img);
+    err = img_disp(&img, "sxiv");
+    if(err != IMG_OK){
+        fprintf(stderr, "Failed to load image due: %s\n", img_err2str(err));
         return 1;
     }
 
-    printf("Image loaded successfully!\n");
+    err = img_disp(&img2, "sxiv");
+    if(err != IMG_OK){
+        fprintf(stderr, "Failed to load image due: %s\n", img_err2str(err));
+        return 1;
+    }
+
+
+
+    Image dest; 
+    err = img_resize(&dest, &img2, img2.width/6, img2.height/6);
+    if(err != IMG_OK){
+        fprintf(stderr, "Failed to load image due: %s\n", img_err2str(err));
+        return 1;
+    }
+
+    err = img_disp(&dest, "sxiv");
+    if(err != IMG_OK){
+        fprintf(stderr, "Failed to load image due: %s\n", img_err2str(err));
+        return 1;
+    }
+
+    err = img_save(&dest, "./tset.img");
+    if(err != IMG_OK){
+        fprintf(stderr, "Failed to save image due: %s\n", img_err2str(err));
+        return 1;
+    }
+
+    /* printf("Image loaded successfully!\n");
     printf("Width: %d, Height: %d, Channels: %d\n", img->width, img->height, img->channels);
 
     uint8_t pixel[4] = {0, 0, 0, 0}; // max 4 channels for each pixel
@@ -117,7 +154,7 @@ main(int argc, char const *argv[])
     // Free all image resources
     img_free(img);
     img_free(original_img);
-    img_free(gray_img);
+    img_free(gray_img); */
 
     return 0;
 }

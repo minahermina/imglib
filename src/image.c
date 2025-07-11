@@ -72,8 +72,9 @@ static const struct error_entry error_entries[] = {
     ERROR(IMG_ERR_FILE_CREATE,        "Error creating the file"),
     ERROR(IMG_ERR_UNSUPPORTED_FORMAT, "Unsupported image format"),
     ERROR(IMG_ERR_MEMORY,             "Memory allocation failed"),
+    ERROR(IMG_ERR_INVALID_PARAMETERS, "Parameters passed to the functions are invalid"),
     ERROR(IMG_ERR_CORRUPT_DATA,       "Corrupted image data"),
-    ERROR(IMG_ERR_DIMENSIONS,         "Invalid image dimensions"),
+    ERROR(IMG_ERR_INVALID_DIMENSIONS,         "Invalid dimensions passed"),
     ERROR(IMG_ERR_COLOR_SPACE,        "Unsupported or invalid color space"),
     ERROR(IMG_ERR_UNKNOWN,            "Unknown error")
 };
@@ -91,7 +92,7 @@ addpixel(Image *img, const uint8_t *pixel, uint32_t *current_pos)
     uint8_t *p, i;
     uint32_t x, y;
 
-    IMG_CHECK_COND(img == NULL || pixel == NULL || current_pos == NULL, *img, IMG_ERR_DIMENSIONS, -1);
+    IMG_CHECK_COND(img == NULL || pixel == NULL || current_pos == NULL, *img, IMG_ERR_INVALID_DIMENSIONS, -1);
 
     if (*current_pos >= (uint32_t)(img->width * img->height)) {
         fprintf(stderr, "Error: Exceeded image capacity.\n");
@@ -123,7 +124,7 @@ img_init(Image *img, uint16_t width, uint16_t height, uint8_t channels)
      * - etc.
      */
     if(width == 0 || height == 0 || channels < 1 || channels > 4){
-        err = IMG_ERR_DIMENSIONS; goto error;
+        err = IMG_ERR_INVALID_DIMENSIONS; goto error;
     }
 
     // img = (Image *) malloc(sizeof(Image));
@@ -159,7 +160,7 @@ img_create(uint16_t width, uint16_t height, uint8_t channels)
      * - CMYKA (5 channels)
      * - etc.
      */
-    IMG_CHECK_COND(width == 0 || height == 0 || channels < 1 || channels > 4, img, IMG_ERR_DIMENSIONS, img);
+    IMG_CHECK_COND(width == 0 || height == 0 || channels < 1 || channels > 4, img, IMG_ERR_INVALID_DIMENSIONS, img);
 
     // img = (Image *) malloc(sizeof(Image));
     // CHECK_ALLOC(img)
@@ -886,7 +887,7 @@ img_realloc_pixels(Image *img, uint16_t new_width, uint16_t new_height, uint8_t 
 
     err = IMG_OK;
     if(new_width < 1 || new_height < 1 || new_channels < 1 || new_channels > 4){
-        err = IMG_ERR_DIMENSIONS;
+        err = IMG_ERR_INVALID_DIMENSIONS;
         return err;
     }
 
@@ -964,51 +965,52 @@ img_resize(Image *dest, Image *src, uint16_t new_width, uint16_t new_height)
 }
 
 
-Image
-img_add(Image img1, Image img2)
+ImgError
+img_add(Image *dest, Image *img1, Image *img2)
 {
-    Image img = {0};
+    ImgError err;
     uint16_t x, y, width, height, sum;
     uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
 
+    MUST(img1       != NULL, "img1 is NULL in img_add");
+    MUST(img2       != NULL, "img1 is NULL in img_add");
+    MUST(img1->data != NULL, "img1->data is NULL in img_add");
+    MUST(img2->data != NULL, "img1->data is NULL in img_add");
+    MUST(dest       != NULL, "dest is NULL in img_add");
 
-    if(img1.data == NULL || img2.data == NULL){
-        img.status = IMG_ERR_INVALID_PARAMETERS;
-        return img;
-    }
-
-    if(img1.width != img2.width       ||
-       img1.height != img2.height     ||
-       img1.channels != img2.channels ||
-       img1.type != img2.type
+    err = IMG_OK;
+    if(img1->width != img2->width       ||
+       img1->height != img2->height     ||
+       img1->channels != img2->channels ||
+       img1->type != img2->type
     ){
-        img.status = IMG_ERR_INVALID_PARAMETERS;
-        return img;
+        err = IMG_ERR_INVALID_DIMENSIONS;
+        return err;
     }
 
-    width = img1.width;
-    height = img1.height;
-    channels = img1.channels;
+    width = img1->width;
+    height = img1->height;
+    channels = img1->channels;
 
-    img = img_create(width, height, channels);
-    img.type = img1.type;
-    if(img.status != IMG_OK){
-        return img;
+    err = img_realloc_pixels(dest, width, height, channels);
+    dest->type = img1->type;
+    if(err != IMG_OK){
+        return err;
     }
 
 
     for(y = 0; y < height; ++y){
         for(x = 0; x < width; ++x){
-            img_getpx(&img1, x, y, pixel1);
-            img_getpx(&img2, x, y, pixel2);
+            img_getpx(img1, x, y, pixel1);
+            img_getpx(img2, x, y, pixel2);
             for(ch = 0; ch < channels; ++ch){
                 sum = (uint16_t) pixel1[ch] + (uint16_t) pixel2[ch];
                 pixel1[ch] = (uint8_t)(MIN(255, sum));
             }
-            img_setpx(&img, x, y, pixel1);
+            img_setpx(dest, x, y, pixel1);
         }
     }
-    return img;
+    return err;
 }
 
 /*

@@ -60,7 +60,7 @@ typedef enum {
     IMG_ERR_UNSUPPORTED_FORMAT  = -5,   /* The image format is not supported or invalid  */
     IMG_ERR_MEMORY              = -6,   /* Memory allocation failed                      */
     IMG_ERR_INVALID_PARAMETERS  = -7,
-    IMG_ERR_DIMENSIONS          = -8,   /* Invalid image dimensions                      */
+    IMG_ERR_INVALID_DIMENSIONS  = -8,   /* Invalid dimensions passed                      */
     /* maybe used ? idk */
     IMG_ERR_COLOR_SPACE         = -9,   /* Unsupported or invalid color space            */
     IMG_ERR_CORRUPT_DATA        = -10,   /* The image data is corrupted                   */
@@ -117,7 +117,7 @@ void img_free_kernel(Kernel kernel);
 void img_convolve(Image *img, Kernel kernel, BorderMode border_mode);
 Image *img_rgb2gray(Image *img);
 ImgError img_resize(Image *dest, Image *src, uint16_t new_width, uint16_t new_height); //
-Image img_add(Image img1, Image img2);
+ImgError img_add(Image *dest, Image *img1, Image *img2);
 Image img_subtract(Image img1, Image img2);
 
 #endif

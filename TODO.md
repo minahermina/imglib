@@ -2,7 +2,7 @@
 
 ## Error handling
 
-- [ ] **Implement structured error handling system with meaningful error codes, and user-friendly messages for efficient debugging**
+- [x] **Implement structured error handling system with meaningful error codes, and user-friendly messages for efficient debugging**
 
 ## Custom Convolution Function
 
@@ -32,7 +32,7 @@
 ## Image Arithmetic
 
 - [x] **Image Addition**
-- [ ] **Image Subtraction**
+- [x] **Image Subtraction**
 
 ## General Enhancements
 

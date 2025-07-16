@@ -39,14 +39,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define VAR(var)                  fprintf(stderr, "[DEBUG] %s = %d\n", #var, (var))
 /* TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
 #define HEX_TO_ASCII(hex)         (char[]){(char)((hex) >> 8), (char)((hex) & 0xFF), '\0'}
-#define IMG_CHECK_COND(ex, img, errcode, ret) \
-    if (ex) { \
-        fprintf(stderr, "Error: (%s) is True!\n(function: %s, line %d, file %s)\n", \
-                #ex, __func__, __LINE__, __FILE__); \
-        (img).status = errcode; \
-        return ret; \
-    }
-
 #define MUST(condition, message) \
     do { \
         if (!(condition)) { \
@@ -93,7 +85,9 @@ addpixel(Image *img, const uint8_t *pixel, uint32_t *current_pos)
     uint8_t *p, i;
     uint32_t x, y;
 
-    IMG_CHECK_COND(img == NULL || pixel == NULL || current_pos == NULL, *img, IMG_ERR_INVALID_DIMENSIONS, -1);
+    MUST(img != NULL,         "img is NULL in addpixel"); 
+    MUST(pixel != NULL ,      "img is NULL in addpixel");
+    MUST(current_pos != NULL, "img is NULL in addpixel"); 
 
     if (*current_pos >= (uint32_t)(img->width * img->height)) {
         fprintf(stderr, "Error: Exceeded image capacity.\n");
@@ -173,37 +167,6 @@ img_init(Image *img, uint16_t width, uint16_t height, uint8_t channels)
     err = IMG_OK;
 error:
     return err;
-}
-
-Image
-img_create(uint16_t width, uint16_t height, uint8_t channels)
-{
-    Image img = {0};
-    img.status = IMG_OK;
-
-    /*TODO: Extend channel support beyond the current 1-4 limit to accommodate additional color spaces:
-     * - LAB (3 channels)
-     * - CMYK (4 channels)
-     * - CMYKA (5 channels)
-     * - etc.
-     */
-    IMG_CHECK_COND(width == 0 || height == 0 || channels < 1 || channels > 4, img, IMG_ERR_INVALID_DIMENSIONS, img);
-
-    // img = (Image *) malloc(sizeof(Image));
-    // CHECK_ALLOC(img)
-
-    img.stride = calc_stride(width, channels);
-    img.data = (uint8_t*) malloc(height * img.stride);
-    IMG_CHECK_COND(img.data == NULL, img, IMG_ERR_MEMORY, img);
-
-    memset(img.data, 0, height * img.stride);
-
-    img.width = width;
-    img.height = height;
-    img.channels = channels;
-    img.type = -1;
-
-    return img;
 }
 
 ImgError

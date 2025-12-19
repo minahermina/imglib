@@ -26,6 +26,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define img_err2str(status) \
     img_strerror((char[IMG_ERROR_MAX_STRING_SIZE]){0}, IMG_ERROR_MAX_STRING_SIZE, status)
 
+/* Typdefs ---------------------------- */
+typedef uint32_t u32;
+typedef uint16_t u16;
+typedef uint8_t u8;
+
 typedef enum {
     IMG_UNKNOWN = -1,
     IMG_PPM_BIN = 0x5036,   // P6
@@ -69,16 +74,17 @@ typedef enum {
     IMG_ERR_UNKNOWN             = -13    /* Unknown error                                 */
 } ImgError;
 
+
 typedef struct {
     uint8_t *data;
     /* 
     - read this https://medium.com/@oleg.shipitko/what-does-stride-mean-in-image-processing-bba158a72bcd
     - read about memory access patterns
     */
-    uint32_t stride;
-    uint16_t width;
-    uint16_t height;
-    uint8_t  channels;
+    u32 stride;
+    u16 width;
+    u16 height;
+    u8 channels;
     ImgType type;
     ImgError status;
 } Image;
@@ -94,12 +100,12 @@ typedef enum {
 } BorderMode;
 
 
-ImgError img_init(Image *img, uint16_t width, uint16_t height, uint8_t channels);
-Image img_create(uint16_t width, uint16_t height, uint8_t channels);
+ImgError img_init(Image *img, u16 width, u16 height, u8 channels);
+Image img_create(u16 width, u16 height, u8 channels);
 ImgError img_load(Image *img, const char* file);
 ImgError img_loadpnm(Image *img, const char* file, ImgType type);
-ImgError img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel);
-ImgError img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel);
+ImgError img_getpx(Image *img, u16 x, u16 y, u8 *pixel);
+ImgError img_setpx(Image *img, u16 x, u16 y, u8 *pixel);
 ImgError img_savepnm(Image *img, const char *file);
 ImgError img_save(Image *img, const char *file);
 ImgError img_cpy(Image *dest, Image *src);
@@ -118,7 +124,7 @@ void img_free_kernel(Kernel *kernel);
 /* ------------------------------------*/
 ImgError img_convolve(Image *dest, Image *img, Kernel *kernel, BorderMode border_mode);
 ImgError img_rgb2gray(Image *dest, Image *img);
-ImgError img_resize(Image *dest, Image *src, uint16_t new_width, uint16_t new_height);
+ImgError img_resize(Image *dest, Image *src, u16 new_width, u16 new_height);
 ImgError img_add(Image *dest, Image *img1, Image *img2);
 ImgError img_subtract(Image *dest, Image *img1, Image *img2);
 

@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define FLOOR(x)                  ((int)(x) - ((x) < 0 && (x) != (int)(x)))
 #define ABS(x)                    ((x) < 0 ? -(x) : (x))
 #define P(x)                      (x <= 0 ? 0 : x)
-#define IMG_PIXEL_PTR(img, x, y)  ((uint8_t*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
+#define IMG_PIXEL_PTR(img, x, y)  ((u8*)((img)->data + (y) * (img)->stride + (x) * (img)->channels))
 #define IMG_ARR_SIZE(x)           (sizeof(x) / sizeof((x)[0]))
 #define VAR(var)                  fprintf(stderr, "[DEBUG] %s = %d\n", #var, (var))
 /* TODO: find more flexible & dynamic way for this (more than 2 bytes))*/
@@ -72,24 +72,24 @@ static const struct error_entry error_entries[] = {
     ERROR(IMG_ERR_UNKNOWN,             "Unknown error")
 };
 
-static inline uint32_t
-calc_stride(uint16_t width, uint8_t channels)
+static inline u32
+calc_stride(u16 width, u8 channels)
 {
-    return (((uint32_t) width * (uint32_t)channels + 15) & ~(uint32_t)15);
+    return (((u32) width * (u32)channels + 15) & ~(u32)15);
 }
 
 /* TODO: Replace current_pos logic with x, y to use img_getpx & img_setpx*/
 static int8_t
-addpixel(Image *img, const uint8_t *pixel, uint32_t *current_pos)
+addpixel(Image *img, const u8 *pixel, u32 *current_pos)
 {
-    uint8_t *p, i;
-    uint32_t x, y;
+    u8 *p, i;
+    u32 x, y;
 
     MUST(img != NULL,         "img is NULL in addpixel"); 
     MUST(pixel != NULL ,      "img is NULL in addpixel");
     MUST(current_pos != NULL, "img is NULL in addpixel"); 
 
-    if (*current_pos >= (uint32_t)(img->width * img->height)) {
+    if (*current_pos >= (u32)(img->width * img->height)) {
         fprintf(stderr, "Error: Exceeded image capacity.\n");
         return -1;
     }
@@ -108,7 +108,7 @@ addpixel(Image *img, const uint8_t *pixel, uint32_t *current_pos)
 }
 
 ImgError
-img_realloc_pixels(Image *img, uint16_t new_width, uint16_t new_height, uint8_t new_channels)
+img_realloc_pixels(Image *img, u16 new_width, u16 new_height, u8 new_channels)
 {
     ImgError err;
     MUST(img != NULL, "img is NULL in img_realloc_pixels");
@@ -121,7 +121,7 @@ img_realloc_pixels(Image *img, uint16_t new_width, uint16_t new_height, uint8_t 
 
 
     img->stride = calc_stride(new_width, new_channels);
-    img->data = (uint8_t*) realloc(img->data, new_height * img->stride);
+    img->data = (u8*) realloc(img->data, new_height * img->stride);
     MUST(img->data != NULL, "img->data is NULL in img_realloc_pixels");
 
     memset(img->data, 0, new_height * img->stride);
@@ -134,7 +134,7 @@ img_realloc_pixels(Image *img, uint16_t new_width, uint16_t new_height, uint8_t 
 }
 
 ImgError
-img_init(Image *img, uint16_t width, uint16_t height, uint8_t channels)
+img_init(Image *img, u16 width, u16 height, u8 channels)
 {
     ImgError err;
 
@@ -152,7 +152,7 @@ img_init(Image *img, uint16_t width, uint16_t height, uint8_t channels)
     // CHECK_ALLOC(img)
 
     img->stride = calc_stride(width, channels);
-    img->data = (uint8_t*) malloc(height * img->stride);
+    img->data = (u8*) malloc(height * img->stride);
     if(img->data == NULL) {
         err = IMG_ERR_MEMORY;  goto error;
     }
@@ -198,7 +198,7 @@ img_type(const char *file, ImgType *type)
         }
     }
 
-    uint16_t magic_ = (magic[0] << 8) | magic[1];
+    u16 magic_ = (magic[0] << 8) | magic[1];
 
     fclose(f);
 
@@ -266,9 +266,9 @@ img_loadpnm(Image *img, const char* file, ImgType type)
     ImgError err;
     ssize_t imgfile;
     FILE* tmp_file;
-    uint8_t pixel[3], channels, ch, leftover[2] = {0}, leftover_size = 0;
-    uint16_t w, h;
-    uint32_t i, curr_pos = 0, bytesread = 0;
+    u8 pixel[3], channels, ch, leftover[2] = {0}, leftover_size = 0;
+    u16 w, h;
+    u32 i, curr_pos = 0, bytesread = 0;
     char line[MAXLINE], chunk[CHUNK_SIZE];
 
     tmp_file = fopen(file, "rb");
@@ -367,9 +367,9 @@ img_loadpnm(Image *img, const char* file, ImgType type)
 }
 
 ImgError
-img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
+img_getpx(Image *img, u16 x, u16 y, u8 *pixel)
 {
-    uint8_t *p, i;
+    u8 *p, i;
     ImgError err;
 
     err = IMG_OK;
@@ -388,9 +388,9 @@ img_getpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
 }
 
 ImgError
-img_setpx(Image *img, uint16_t x, uint16_t y, uint8_t *pixel)
+img_setpx(Image *img, u16 x, u16 y, u8 *pixel)
 {
-    uint8_t *p, i;
+    u8 *p, i;
     ImgError err;
 
     err = IMG_OK;
@@ -473,8 +473,8 @@ img_savepnm(Image *img, const char *file)
 {
     ImgError err;
     FILE *fp;
-    uint32_t x, y;
-    uint8_t *row, *pixel;
+    u32 x, y;
+    u8 *row, *pixel;
 
     MUST(img != NULL, "img is NULL in img_savepnm");
     MUST(file != NULL, "file is NULL in img_savepnm");
@@ -517,8 +517,8 @@ img_free(Image *img)
 void
 img_print(Image *img)
 {
-    uint16_t i, j, k;
-    uint8_t pixel[] = {0, 0, 0, 0};
+    u16 i, j, k;
+    u8 pixel[] = {0, 0, 0, 0};
     MUST(img       != NULL, "img is NULL in img_print");
     MUST(img->data != NULL, "img->data is NULL in img_print");
 
@@ -759,12 +759,12 @@ ImgError
 img_convolve(Image *dest, Image *img, Kernel *kernel, BorderMode border_mode)
 {
     ImgError err;
-    uint8_t channels, *p;
-    uint16_t x, y, half_kernel;
+    u8 channels, *p;
+    u16 x, y, half_kernel;
     int16_t kx, ky, px , py;
     double sum_r, sum_g, sum_b;
     float kernel_val;
-    uint32_t offset;
+    u32 offset;
 
     MUST(img             != NULL, "img is NULL in img_convolve");
     MUST(img->data       != NULL, "img->data is NULL in img_convolve");
@@ -820,10 +820,10 @@ img_convolve(Image *dest, Image *img, Kernel *kernel, BorderMode border_mode)
 
             // Write output directly to the image
             p = IMG_PIXEL_PTR(dest, x, y);
-            p[0] = (uint8_t)sum_r;
+            p[0] = (u8)sum_r;
             if(channels == 3){
-                p[1] = (uint8_t)sum_g;
-                p[2] = (uint8_t)sum_b;
+                p[1] = (u8)sum_g;
+                p[2] = (u8)sum_b;
             }
         }
     }
@@ -834,8 +834,8 @@ ImgError
 img_rgb2gray(Image *dest, Image *img)
 {
     ImgError err;
-    uint16_t x,y;
-    uint8_t pixel[4] = {0, 0, 0, 0}, newpixel[1] = {0};
+    u16 x,y;
+    u8 pixel[4] = {0, 0, 0, 0}, newpixel[1] = {0};
 
     MUST(dest      != NULL, "dest is NULL in img_rgb2gray");
     MUST(img       != NULL, "img is NULL in img_rgb2gray");
@@ -879,13 +879,13 @@ cubic_kernel(float x)
 */
 /* TODO: Optimize redundant calculations and memory access */
 ImgError
-img_resize(Image *dest, Image *src, uint16_t new_width, uint16_t new_height)
+img_resize(Image *dest, Image *src, u16 new_width, u16 new_height)
 {
     ImgError err;
     float scale_x, scale_y, src_x, src_y, value;
     int ix, iy, c, n, m;
-    uint16_t  x, y;
-    uint8_t pixel[3] = {0}, spixel[3];
+    u16  x, y;
+    u8 pixel[3] = {0}, spixel[3];
 
     err = IMG_OK;
     MUST(dest != NULL, "dest is NULL in img_resize");
@@ -937,8 +937,8 @@ ImgError
 img_add(Image *dest, Image *img1, Image *img2)
 {
     ImgError err;
-    uint16_t x, y, width, height, sum;
-    uint8_t ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
+    u16 x, y, width, height, sum;
+    u8 ch, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
 
     MUST(img1       != NULL, "img1 is NULL in img_add");
     MUST(img2       != NULL, "img1 is NULL in img_add");
@@ -972,8 +972,8 @@ img_add(Image *dest, Image *img1, Image *img2)
             img_getpx(img1, x, y, pixel1);
             img_getpx(img2, x, y, pixel2);
             for(ch = 0; ch < channels; ++ch){
-                sum = (uint16_t) pixel1[ch] + (uint16_t) pixel2[ch];
-                pixel1[ch] = (uint8_t)(MIN(255, sum));
+                sum = (u16) pixel1[ch] + (u16) pixel2[ch];
+                pixel1[ch] = (u8)(MIN(255, sum));
             }
             img_setpx(dest, x, y, pixel1);
         }
@@ -990,8 +990,8 @@ ImgError
 img_subtract(Image *dest, Image *img1, Image *img2)
 {
     ImgError err;
-    uint16_t x, y, width, height;
-    uint8_t ch, diff, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
+    u16 x, y, width, height;
+    u8 ch, diff, channels, pixel1[] = {0, 0, 0, 0}, pixel2[] = {0, 0, 0, 0};
 
     MUST(img1       != NULL, "img1 is NULL in img_add");
     MUST(img2       != NULL, "img1 is NULL in img_add");

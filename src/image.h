@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef IMAGE_LIB
 #define IMAGE_LIB
 #include <stdint.h>
+#include "arena.h"
 
 #define IMG_ERROR_MAX_STRING_SIZE 64
 
@@ -85,6 +86,8 @@ typedef struct {
     u16 width;
     u16 height;
     u8 channels;
+    Arena *arena;
+    u8 *owns_arena;
     ImgType type;
     ImgError status;
 } Image;

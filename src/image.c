@@ -107,10 +107,30 @@ addpixel(Image *img, const u8 *pixel, u32 *current_pos)
     return 1;
 }
 
+void*
+img_malloc(size_t size, Arena* arena)
+{
+    if(arena == NULL
+        return malloc(size);
+    else
+        return arena_alloc(arena, size);
+}
+
+void*
+img_realloc(void* ptr, size_t oldsz, size_t newsz, Arena* arena)
+{
+    if(arena == NULL)
+        return realloc(ptr, newsz);
+    else
+        return arena_realloc(arena, ptr, oldsz, newsz);
+}
+
 ImgError
 img_realloc_pixels(Image *img, u16 new_width, u16 new_height, u8 new_channels)
 {
     ImgError err;
+    u32 old_stride;
+
     MUST(img != NULL, "img is NULL in img_realloc_pixels");
 
     err = IMG_OK;
@@ -119,9 +139,14 @@ img_realloc_pixels(Image *img, u16 new_width, u16 new_height, u8 new_channels)
         return err;
     }
 
+    old_stride = img->stride;
 
     img->stride = calc_stride(new_width, new_channels);
-    img->data = (u8*) realloc(img->data, new_height * img->stride);
+    img->data = (u8*) img_realloc((void *)img->data, 
+                                  img->height * old_stride,
+                                  new_height * img->stride, 
+                                  img->arena);
+
     MUST(img->data != NULL, "img->data is NULL in img_realloc_pixels");
 
     memset(img->data, 0, new_height * img->stride);
@@ -133,8 +158,9 @@ img_realloc_pixels(Image *img, u16 new_width, u16 new_height, u8 new_channels)
     return err;
 }
 
+
 ImgError
-img_init(Image *img, u16 width, u16 height, u8 channels)
+img_init(Image *img, u16 width, u16 height, u8 channels, Arena* arena)
 {
     ImgError err;
 
@@ -148,11 +174,10 @@ img_init(Image *img, u16 width, u16 height, u8 channels)
         err = IMG_ERR_INVALID_DIMENSIONS; goto error;
     }
 
-    // img = (Image *) malloc(sizeof(Image));
-    // CHECK_ALLOC(img)
-
     img->stride = calc_stride(width, channels);
-    img->data = (u8*) malloc(height * img->stride);
+    img->arena = arena;
+    img->data = (u8*) img_malloc(height * img->stride, img->arena);
+
     if(img->data == NULL) {
         err = IMG_ERR_MEMORY;  goto error;
     }
@@ -223,7 +248,7 @@ img_type(const char *file, ImgType *type)
 }
 
 ImgError
-img_load(Image *img, const char* file)
+img_load(Image *img, const char* file, Arena *arena)
 {
     ImgError err;
     FILE *f;
@@ -248,7 +273,7 @@ img_load(Image *img, const char* file)
         case IMG_PPM_ASCII:
         case IMG_PGM_BIN:
         case IMG_PGM_ASCII:
-            err = img_loadpnm(img, file, type);
+            err = img_loadpnm(img, file, type, arena);
             break;
         default:
             err = IMG_ERR_UNSUPPORTED_FORMAT;
@@ -261,7 +286,7 @@ img_load(Image *img, const char* file)
 
 /* TODO: Optimize this funciton*/
 ImgError
-img_loadpnm(Image *img, const char* file, ImgType type)
+img_loadpnm(Image *img, const char* file, ImgType type, Arena *arena)
 {
     ImgError err;
     ssize_t imgfile;
@@ -330,7 +355,7 @@ img_loadpnm(Image *img, const char* file, ImgType type)
 
     lseek(imgfile, pos, SEEK_SET);
 
-    err = img_init(img, w, h, channels);
+    err = img_init(img, w, h, channels, arena);
     img->type = type;
     if(err != IMG_OK) {
         close(imgfile);

@@ -86,8 +86,10 @@ typedef struct {
     u16 width;
     u16 height;
     u8 channels;
+
     Arena *arena;
     u8 *owns_arena;
+
     ImgType type;
     ImgError status;
 } Image;
@@ -103,10 +105,9 @@ typedef enum {
 } BorderMode;
 
 
-ImgError img_init(Image *img, u16 width, u16 height, u8 channels);
-Image img_create(u16 width, u16 height, u8 channels);
-ImgError img_load(Image *img, const char* file);
-ImgError img_loadpnm(Image *img, const char* file, ImgType type);
+ImgError img_init(Image *img, u16 width, u16 height, u8 channels, Arena* arena);
+ImgError img_load(Image *img, const char* file, Arena *arena);
+ImgError img_loadpnm(Image *img, const char* file, ImgType type, Arena *arena);
 ImgError img_getpx(Image *img, u16 x, u16 y, u8 *pixel);
 ImgError img_setpx(Image *img, u16 x, u16 y, u8 *pixel);
 ImgError img_savepnm(Image *img, const char *file);

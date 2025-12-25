@@ -110,7 +110,7 @@ addpixel(Image *img, const u8 *pixel, u32 *current_pos)
 void*
 img_malloc(size_t size, Arena* arena)
 {
-    if(arena == NULL
+    if(arena == NULL)
         return malloc(size);
     else
         return arena_alloc(arena, size);
@@ -449,12 +449,7 @@ img_cpy(Image *dest, Image *src)
         dest->height != src->height || 
         dest->channels != src->channels) {
 
-        if (dest->data != NULL) {
-            free(dest->data);
-        }
-
-        // Reinitialize destination with source dimensions
-        err = img_init(dest, src->width, src->height, src->channels);
+        err = img_realloc_pixels(dest, src->width, src->height, src->channels);
         if (err != IMG_OK) {
             return err;
         }

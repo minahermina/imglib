@@ -10,12 +10,19 @@
     }
 
 int main(int argc, char *argv[]) {
-    Image img = {0}, gray_img = {0}, filtered_img = {0}, resized_img = {0};
+    Arena arena = {0};
+    arena_init(&arena, 10 * 1024 * 1024);
+
+    Image img = {0},
+          gray_img = {0},
+          filtered_img = {0},
+          resized_img = {0};
+
     ImgError err;
 
     // --- 1. Load an image ---
     const char *input_path = "images/sample_1920×1280.ppm";
-    err = img_load(&img, input_path);
+    err = img_load(&img, input_path, &arena);
     CHECK_STATUS(err);
 
     // --- 2. Convert to Grayscale ---
@@ -29,7 +36,11 @@ int main(int argc, char *argv[]) {
     }
 
     // --- 3. Apply a Sharpen Filter ---
-    err = img_filter2D(&filtered_img, &img, IMG_KERNEL_SHARPEN, IMG_KERNEL_3x3, IMG_BORDER_REPLICATE);
+    err = img_filter2D(&filtered_img,
+                       &img,
+                       IMG_KERNEL_SHARPEN,
+                       IMG_KERNEL_3x3,
+                       IMG_BORDER_REPLICATE);
     CHECK_STATUS(err);
 
     const char *filtered_path = "sharpened_output.ppm";
@@ -49,16 +60,8 @@ int main(int argc, char *argv[]) {
     // --- 5. Display the original image ---
     // Note: This requires an image viewer like 'eog', and 'feh' to be installed.
     img_disp(&img, "sxiv");
+    arena_destroy(&arena);
 
-
-    // --- 6. Clean up ---
-    img_free(&img);
-    if (gray_img.data) 
-        img_free(&gray_img);
-    if (filtered_img.data) 
-        img_free(&filtered_img);
-    if (resized_img.data) 
-        img_free(&resized_img);
 
     return 0;
 }

@@ -60,7 +60,7 @@ debug: deps $(ARENA_OBJ) $(IMAGE_SRC) $(HEADERS)
 	@echo "--------------------------------------------------------"
 	@echo "Building: Debug shared library ($(SHARED_LIB))"
 	@echo "--------------------------------------------------------"
-	@if $(CC) --version | grep -i clang > /dev/null; then \
+	if $(CC) --version | grep -i clang > /dev/null; then \
 		$(CC) $(CPPFLAGS) $(ARENA_OBJ) $(IMAGE_SRC) $(CFLAGS) $(DEBUG_FLAGS) $(SANITIZER_FLAGS) -shared -fPIC -o $(SHARED_LIB); \
 	else \
 		$(CC) $(CPPFLAGS) $(ARENA_OBJ) $(IMAGE_SRC) $(CFLAGS) $(DEBUG_FLAGS) -shared -fPIC -o $(SHARED_LIB); \
@@ -78,7 +78,7 @@ example: debug
 	@echo "--------------------------------------------------------"
 	@echo "Building: Example ($(EXAMPLE_TARGET))"
 	@echo "--------------------------------------------------------"
-	@if $(CC) --version | grep -i clang > /dev/null; then \
+	if $(CC) --version | grep -i clang > /dev/null; then \
 		$(CC) $(CPPFLAGS) $(CFLAGS) $(DEBUG_FLAGS) $(SANITIZER_FLAGS) $(ARENA_OBJ) $(EXAMPLE_SRC) $(LDFLAGS) -o $(EXAMPLE_TARGET); \
 	else \
 		$(CC) $(CPPFLAGS) $(CFLAGS) $(DEBUG_FLAGS) $(ARENA_OBJ) $(EXAMPLE_SRC) $(LDFLAGS) -o $(EXAMPLE_TARGET); \

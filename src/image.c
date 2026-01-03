@@ -79,7 +79,7 @@ calc_stride(u16 width, u8 channels)
 }
 
 /* TODO: Replace current_pos logic with x, y to use img_getpx & img_setpx*/
-static int8_t
+static i8
 addpixel(Image *img, const u8 *pixel, u32 *current_pos)
 {
     u8 *p, i;
@@ -753,7 +753,7 @@ img_convolve(Image *dest, Image *img, Kernel *kernel, BorderMode border_mode)
     ImgError err;
     u8 channels, *p;
     u16 x, y, half_kernel;
-    int16_t kx, ky, px , py;
+    i16 kx, ky, px , py;
     double sum_r, sum_g, sum_b;
     float kernel_val;
     u32 offset;

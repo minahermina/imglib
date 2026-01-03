@@ -28,9 +28,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     img_strerror((char[IMG_ERROR_MAX_STRING_SIZE]){0}, IMG_ERROR_MAX_STRING_SIZE, status)
 
 /* Typdefs ---------------------------- */
+typedef uint64_t u64;
 typedef uint32_t u32;
 typedef uint16_t u16;
 typedef uint8_t u8;
+
+typedef int64_t i64;
+typedef int16_t i16;
+typedef int8_t i8;
 
 typedef enum {
     IMG_UNKNOWN = -1,

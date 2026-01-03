@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
     CHECK_STATUS(err);
 
     // --- 4. Resize the Image ---
-    uint16_t new_width = 320;
-    uint16_t new_height = 213;
+    u16 new_width = 320;
+    u16 new_height = 213;
     err = img_resize(&resized_img, &img, new_width, new_height);
     CHECK_STATUS(err);
 

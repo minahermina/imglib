@@ -135,8 +135,7 @@ img_realloc_pixels(Image *img, u16 new_width, u16 new_height, u8 new_channels)
 
     err = IMG_OK;
     if(new_width < 1 || new_height < 1 || new_channels < 1 || new_channels > 4){
-        err = IMG_ERR_INVALID_DIMENSIONS;
-        return err;
+        err = IMG_ERR_INVALID_DIMENSIONS;  goto error;
     }
 
     old_stride = img->stride;
@@ -155,6 +154,7 @@ img_realloc_pixels(Image *img, u16 new_width, u16 new_height, u8 new_channels)
     img->height = new_height;
     img->channels = new_channels;
 
+error: 
     return err;
 }
 
@@ -209,18 +209,12 @@ img_type(const char *file, ImgType *type)
 
     f = fopen(file, "rb");
     if(f == NULL){
-        err = IMG_ERR_FILE_NOT_FOUND;
-        return err;
+        err = IMG_ERR_FILE_NOT_FOUND; goto error;
     }
 
     while (fgets(line, MAXLINE, f) != NULL) {
-        if (line[0] == '#') {
-            continue;  // Skip comment lines
-        }
-
-        if (sscanf(line, "%2s", magic) == 1) {
-            break;
-        }
+        if (line[0] == '#') continue;  // Skip comment lines
+        if (sscanf(line, "%2s", magic) == 1) break;
     }
 
     u16 magic_ = (magic[0] << 8) | magic[1];
@@ -244,6 +238,7 @@ img_type(const char *file, ImgType *type)
             *type =  IMG_UNKNOWN;
             break;
     }
+error:
     return err;
 }
 
@@ -259,14 +254,11 @@ img_load(Image *img, const char* file, Arena *arena)
 
     f = fopen(file, "r");
     if (f == NULL){
-        err = IMG_ERR_FILE_NOT_FOUND;
-        return err;
+        err = IMG_ERR_FILE_NOT_FOUND; goto error;
     }
 
     err = img_type(file, &type);
-    if(err != IMG_OK){
-        return err;
-    }
+    if(err != IMG_OK) goto error;
 
     switch(type) {
         case IMG_PPM_BIN: /* FALLTHROUGH */
@@ -276,10 +268,10 @@ img_load(Image *img, const char* file, Arena *arena)
             err = img_loadpnm(img, file, type, arena);
             break;
         default:
-            err = IMG_ERR_UNSUPPORTED_FORMAT;
-            return err;
+            err = IMG_ERR_UNSUPPORTED_FORMAT; goto error;
+     
     }
-
+error:
     return err;
 }
 
@@ -298,8 +290,7 @@ img_loadpnm(Image *img, const char* file, ImgType type, Arena *arena)
 
     tmp_file = fopen(file, "rb");
     if(tmp_file  == NULL){
-        err = IMG_ERR_FILE_NOT_FOUND;
-        return err;
+        err = IMG_ERR_FILE_NOT_FOUND; goto error;
     } 
 
     switch(type) {
@@ -312,35 +303,30 @@ img_loadpnm(Image *img, const char* file, ImgType type, Arena *arena)
             channels = 1;
             break;
         default:
-            err = IMG_ERR_UNSUPPORTED_FORMAT;
-            return err;
+            err = IMG_ERR_UNSUPPORTED_FORMAT; goto error;
     }
 
     if (!fgets(line, sizeof(line), tmp_file)) {
         fclose(tmp_file);
-        err = IMG_ERR_FILE_READ;
-        return err;
+        err = IMG_ERR_FILE_READ; goto error;
     }  /* Read PNM magic number*/
 
     do {
         if (!fgets(line, sizeof(line), tmp_file)) {
             fclose(tmp_file); 
-            err = IMG_ERR_FILE_READ;
-            return err;
+            err = IMG_ERR_FILE_READ;  goto error;
         }
     } while (line[0] == '#'); /* Read width & height*/
 
     if (!sscanf(line, "%hu %hu", &w, &h) ) {
         fclose(tmp_file);
-        err = IMG_ERR_FILE_READ; 
-        return err;
+        err = IMG_ERR_FILE_READ; goto error;
     }
 
     do {
         if (!fgets(line, sizeof(line), tmp_file)) {
             fclose(tmp_file);
-            err = IMG_ERR_FILE_READ;
-            return err;
+            err = IMG_ERR_FILE_READ;  goto error;
         }
     } while (line[0] == '#'); /* Ignore depth info, typically 255*/
 
@@ -349,8 +335,7 @@ img_loadpnm(Image *img, const char* file, ImgType type, Arena *arena)
 
     imgfile = open(file, O_RDONLY);
     if(imgfile < 0){
-        err = IMG_ERR_FILE_READ; 
-        return err;
+        err = IMG_ERR_FILE_READ; goto error;
     } 
 
     lseek(imgfile, pos, SEEK_SET);
@@ -358,8 +343,7 @@ img_loadpnm(Image *img, const char* file, ImgType type, Arena *arena)
     err = img_init(img, w, h, channels, arena);
     img->type = type;
     if(err != IMG_OK) {
-        close(imgfile);
-        return err;
+        close(imgfile);  goto error;
     }
 
     while ((bytesread = read(imgfile, chunk, sizeof(chunk))) > 0) {
@@ -376,8 +360,7 @@ img_loadpnm(Image *img, const char* file, ImgType type, Arena *arena)
             }
             if (addpixel(img, pixel, &curr_pos) < 0) {
                 close(imgfile);
-                err = IMG_ERR_CORRUPT_DATA; 
-                return err;
+                err = IMG_ERR_CORRUPT_DATA; goto error;
             }
         }
 
@@ -388,6 +371,7 @@ img_loadpnm(Image *img, const char* file, ImgType type, Arena *arena)
     close(imgfile);
 
     err = IMG_OK;
+error:
     return err;
 }
 
@@ -400,8 +384,7 @@ img_getpx(Image *img, u16 x, u16 y, u8 *pixel)
     err = IMG_OK;
     if (img == NULL || pixel == NULL || x >= img->width || y >= img->height) {
         fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
-        err = IMG_ERR_INVALID_PARAMETERS;
-        return err;
+        err = IMG_ERR_INVALID_PARAMETERS;  goto error;
     }
 
     p = IMG_PIXEL_PTR(img, x, y);
@@ -409,7 +392,8 @@ img_getpx(Image *img, u16 x, u16 y, u8 *pixel)
         pixel[i] = p[i];
     }
 
-    return 1;
+error:
+    return err;
 }
 
 ImgError
@@ -421,16 +405,15 @@ img_setpx(Image *img, u16 x, u16 y, u8 *pixel)
     err = IMG_OK;
     if (img == NULL || pixel == NULL || x >= img->width || y >= img->height) {
         fprintf(stderr, "Error: (function: %s, line %d, file %s)\n", __func__, __LINE__, __FILE__);
-        err = IMG_ERR_INVALID_PARAMETERS;
-        return err;
+        err = IMG_ERR_INVALID_PARAMETERS;  goto error;
     }
 
     p = IMG_PIXEL_PTR(img, x, y);
 
-    for(i = 0; i < img->channels; i++) {
+    for(i = 0; i < img->channels; i++)
         p[i] = MIN(255, pixel[i]);
-    }
 
+error:
     return err;
 }
 
@@ -450,9 +433,7 @@ img_cpy(Image *dest, Image *src)
         dest->channels != src->channels) {
 
         err = img_realloc_pixels(dest, src->width, src->height, src->channels);
-        if (err != IMG_OK) {
-            return err;
-        }
+        if (err != IMG_OK) goto error;
     }
 
     dest->type = src->type;
@@ -460,6 +441,7 @@ img_cpy(Image *dest, Image *src)
     // Copy image data
     memcpy(dest->data, src->data, src->height * src->stride);
 
+error:
     return err;
 }
 
@@ -471,8 +453,7 @@ img_save(Image *img, const char *file)
     MUST(file != NULL, "file is NULL in img_save");
 
     if(strlen(file) < 1){
-        err = IMG_ERR_INVALID_PARAMETERS;
-        return err;
+        err = IMG_ERR_INVALID_PARAMETERS; goto error;
     }
 
     switch (img->type) {
@@ -483,8 +464,9 @@ img_save(Image *img, const char *file)
             err = img_savepnm(img , file);
             break;
         default:
-            err = IMG_ERR_UNSUPPORTED_FORMAT;
+            err = IMG_ERR_UNSUPPORTED_FORMAT; goto error;
     }
+error:
     return err;
 }
 
@@ -503,8 +485,7 @@ img_savepnm(Image *img, const char *file)
 
     fp = fopen(file, "wb");
     if(fp == NULL){
-        err = IMG_ERR_FILE_READ;
-        return err;
+        err = IMG_ERR_FILE_READ; goto error;
     }
 
     // Write header
@@ -516,12 +497,12 @@ img_savepnm(Image *img, const char *file)
             pixel = &row[x * img->channels];
             if (fwrite(pixel, 1, img->channels, fp) != img->channels) {
                 fclose(fp);
-                err = IMG_ERR_FILE_WRITE;
-                return err;
+                err = IMG_ERR_FILE_WRITE; goto error;
             }
         }
     }
     fclose(fp);
+error:
     return err;
 }
 
@@ -530,7 +511,6 @@ img_free(Image *img)
 {
     MUST(img       != NULL, "img is NULL in img_free");
     MUST(img->data != NULL, "img->data is NULL in img_free");
-
     free(img->data);
 }
 
@@ -579,22 +559,18 @@ img_disp(Image *img, const char* imgviewer)
 
     fd = mkstemp(template);
     if(fd == -1) {
-        err = IMG_ERR_FILE_CREATE;
-        return err;
+        err = IMG_ERR_FILE_CREATE; goto error;
     }
 
     FILE* file = fdopen(fd, "w+");
     if(file == NULL) {
         close(fd);
         unlink(template);
-        err = IMG_ERR_FILE_READ;
-        return err;
+        err = IMG_ERR_FILE_READ; goto error;
     }
 
     err = img_save(img, template);
-    if(err != IMG_OK){
-        return err;
-    }
+    if(err != IMG_OK) goto error;
 
     sprintf(CMD, "%s %s", imgviewer, template);
     printf("Executing command: '%s'\n", CMD);
@@ -603,6 +579,7 @@ img_disp(Image *img, const char* imgviewer)
     fclose(file);
     unlink(template);
 
+error:
     return err;
 }
 
@@ -613,9 +590,8 @@ img_strerror(char *buf, size_t sz, ImgError status)
     size_t i;
     const struct error_entry* entry = NULL;
     for(i = 0; i < IMG_ARR_SIZE(error_entries); ++i ){
-        if(status == error_entries[i].errcode){
+        if(status == error_entries[i].errcode)
             entry = &error_entries[i];
-        }
     }
     strncpy(buf, entry->str, sz);
     return buf;
@@ -660,9 +636,7 @@ img_get_kernel(KernelType type, KernelSize size, Kernel *kernel)
     err = IMG_OK;
 
     err = kernel_alloc(size, kernel);
-    if(err != IMG_OK){
-        return err;
-    }
+    if(err != IMG_OK) goto error;
     switch(type) {
         case IMG_KERNEL_IDENTITY:
 
@@ -672,9 +646,9 @@ img_get_kernel(KernelType type, KernelSize size, Kernel *kernel)
 
         case IMG_KERNEL_BOX_BLUR:
 
-            for (i = 0; i < (size_squared); i++) {
+            for (i = 0; i < (size_squared); i++)
                 kernel->data[i] = 1.0f / size_squared ;
-            }
+
             break;
 
 
@@ -711,10 +685,11 @@ img_get_kernel(KernelType type, KernelSize size, Kernel *kernel)
         case IMG_KERNEL_GAUSSIAN_BLUR:
             /*TODO: implement the gaussian formula */
         default:
-            err = IMG_ERR_MEMORY;
+            err = IMG_ERR_MEMORY; goto error;
             break;
     }
 
+error:
     return err;
 }
 
@@ -728,17 +703,14 @@ img_filter2D(Image *dest, Image *img, KernelType type, KernelSize size, BorderMo
     MUST(dest      != NULL, "dest is NULL in img_filter2D");
 
     err = img_get_kernel(type, size, &kernel);
-    if (err != IMG_OK) {
-        return err;
-    }
+    if (err != IMG_OK) goto error;
 
     err = img_convolve(dest, img, &kernel, border_mode);
-    if (err != IMG_OK) {
-        return err;
-    }
+    if (err != IMG_OK) goto error;
 
     img_free_kernel(&kernel);
 
+error:
     return err;
 }
 
@@ -796,9 +768,7 @@ img_convolve(Image *dest, Image *img, Kernel *kernel, BorderMode border_mode)
     channels = img->channels;
 
     err = img_cpy(dest, img);
-    if(err != IMG_OK){
-        return err;
-    }
+    if(err != IMG_OK) goto error;
 
     for (y = 0; y < dest->height; y++) {
         for (x = 0; x < dest->width; x++) {
@@ -847,6 +817,7 @@ img_convolve(Image *dest, Image *img, Kernel *kernel, BorderMode border_mode)
             }
         }
     }
+error:
     return err;
 }
 
@@ -862,9 +833,7 @@ img_rgb2gray(Image *dest, Image *img)
     MUST(img->data != NULL, "img->data is NULL in img_rgb2gray");
 
     err = img_realloc_pixels(dest, img->width, img->height, 1);
-    if(err != IMG_OK){
-        return err;
-    }
+    if(err != IMG_OK) goto error;
 
     dest->type = IMG_PGM_BIN;
     for(x = 0; x < dest->width; ++x) {
@@ -876,6 +845,7 @@ img_rgb2gray(Image *dest, Image *img)
         }
     }
 
+error:
     return err;
 }
 
@@ -912,8 +882,7 @@ img_resize(Image *dest, Image *src, u16 new_width, u16 new_height)
     MUST(src  != NULL, "src is NULL in img_resize");
 
     if(new_width < 1 || new_height < 1){
-        err = IMG_ERR_INVALID_PARAMETERS;
-        return err;
+        err = IMG_ERR_INVALID_PARAMETERS; goto error;
     }
 
     err = img_realloc_pixels(dest, new_width, new_height, src->channels);
@@ -949,6 +918,7 @@ img_resize(Image *dest, Image *src, u16 new_width, u16 new_height)
             img_setpx(dest, x, y, pixel);
         }
     }
+error:
     return err;
 }
 
@@ -972,8 +942,7 @@ img_add(Image *dest, Image *img1, Image *img2)
        img1->channels != img2->channels ||
        img1->type != img2->type
     ){
-        err = IMG_ERR_INVALID_DIMENSIONS;
-        return err;
+        err = IMG_ERR_INVALID_DIMENSIONS; goto error;
     }
 
     width = img1->width;
@@ -982,10 +951,7 @@ img_add(Image *dest, Image *img1, Image *img2)
 
     err = img_realloc_pixels(dest, width, height, channels);
     dest->type = img1->type;
-    if(err != IMG_OK){
-        return err;
-    }
-
+    if(err != IMG_OK) goto error;
 
     for(y = 0; y < height; ++y){
         for(x = 0; x < width; ++x){
@@ -998,6 +964,7 @@ img_add(Image *dest, Image *img1, Image *img2)
             img_setpx(dest, x, y, pixel1);
         }
     }
+error:
     return err;
 }
 
@@ -1025,8 +992,7 @@ img_subtract(Image *dest, Image *img1, Image *img2)
        img1->channels != img2->channels ||
        img1->type != img2->type
     ){
-        err = IMG_ERR_INVALID_DIMENSIONS;
-        return err;
+        err = IMG_ERR_INVALID_DIMENSIONS; goto error;
     }
 
     width = img1->width;
@@ -1035,10 +1001,7 @@ img_subtract(Image *dest, Image *img1, Image *img2)
 
     err = img_realloc_pixels(dest, width, height, channels);
     dest->type = img1->type;
-    if(err != IMG_OK){
-        return err;
-    }
-
+    if(err != IMG_OK)  goto error;
 
     for(y = 0; y < height; ++y){
         for(x = 0; x < width; ++x){
@@ -1051,5 +1014,6 @@ img_subtract(Image *dest, Image *img1, Image *img2)
             img_setpx(dest, x, y, pixel2);
         }
     }
+error:
     return err;
 }

@@ -1,5 +1,4 @@
 include config.mk
-
 CC = gcc
 CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=700L -D_POSIX_C_SOURCE=200809L
 CFLAGS = -std=c99 -Wno-pedantic -Wall
@@ -30,7 +29,6 @@ ARENA_H = $(SRC_DIR)/arena.h
 HEADERS = $(IMAGE_H) $(ARENA_H)
 
 all: deps release
-lib: deps release
 
 deps:
 	@if [ ! -f "$(ARENA_H)" ] || \
